@@ -1,25 +1,32 @@
 CC=g++
 
+HD=headers
+BIN=bin
+OL=objects
+DOC=doc
+
 WARNING_FLAGS=-Wall -Wextra -Werror -Wshadow -pedantic-errors
-CFLAGS= -ggdb $(WARNING_FLAGS)
-LDFLAGS= -ggdb
+CFLAGS= -ggdb -I$(HD) $(WARNING_FLAGS)
+LDFLAGS= -ggdb -I$(HD)
+
+VPATH = src:doc:objects
 
 .cpp.o:
-	$(CC) -c $(CFLAGS) $<
+	$(CC) -c $(CFLAGS) $< -o $(OL)/$@
 
-all: server 
+all: message.o communication.o $(BIN)/server verslag.pdf
 
-server: message.o communication.o
+$(BIN)/server: $(OL)/message.o $(OL)/communication.o
 	$(CC) $(LDFLAGS) -o $@ $^ 
 
-verslag: verslag.tex
-	pdflatex verslag.tex
-	rm -f *.aux
-	rm -f *.log
+verslag.pdf: verslag.tex
+	pdflatex -output-directory $(DOC) $< 
+	rm -f */*.aux
+	rm -f */*.log
 
 clean:
-	rm -f *.o server
+	rm -f */*.o */server *.o */verslag.pdf
 
-message.o: message.cpp *.h
-communication.o: communication.cpp *.h
+message.o: message.cpp */*.h
+communication.o: communication.cpp */*.h
 
