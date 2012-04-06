@@ -1,7 +1,14 @@
+#ifndef _MESSAGE
+#define _MESSAGE 1
 #include <string>
 using namespace std;
+
 class Message
 {
+private:
+	string data;
+		
+public:	
 	Message(void);
 
 	void setType(int);
@@ -25,7 +32,11 @@ class Message
 		none = send to none (default)
 	*/
 	void setRecipients(string);
-	string getSender(void);
+	string getRecipients(void);
 
-	void send(void);
+	/*
+		none = there is no sender, whut are you doing?
+	*/
+	string getSender(void);
 };
+#endif
