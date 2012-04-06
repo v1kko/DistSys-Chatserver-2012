@@ -5,7 +5,7 @@ BIN=bin
 OL=objects
 DOC=doc
 
-WARNING_FLAGS=-Wall -Wextra -Werror -Wshadow -pedantic-errors
+WARNING_FLAGS=-Wall -Wextra -Wshadow -pedantic-errors
 CFLAGS= -ggdb -I$(HD) $(WARNING_FLAGS)
 LDFLAGS= -ggdb -I$(HD)
 

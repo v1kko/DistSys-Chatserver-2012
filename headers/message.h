@@ -3,6 +3,11 @@
 #include <string>
 using namespace std;
 
+#define ALL 2
+#define NONE 0
+#define ALLBUTONE -1
+#define ONE 1
+
 class Message
 {
 private:
@@ -13,8 +18,12 @@ public:
 
 	void setType(int);
 	int getType(void);
+	
+	//Also sets the length (implicit), do error checking
 	void setMessage(string);
 	string getMessage(void);
+	
+	int length(void);
 	
 	//'Volgnummer'
 	void setReferenceNumber(int);
@@ -26,17 +35,15 @@ public:
 		Since all our connected clients/servers have a name 
 		we can parse that name
 
-		name = send to that person
-		~name = send to everyone but person
-		all = send to all
-		none = send to none (default)
+		1 = send to that person
+		-1 = send to everyone but person
+		2 = send to all
+		0 = send to none (default)
 	*/
-	void setRecipients(string);
-	string getRecipients(void);
+	void setRecipients(string, int);
+	string getRecipients(int *);
 
-	/*
-		none = there is no sender, whut are you doing?
-	*/
-	string getSender(void);
+	void getSender(unsigned long *, unsigned short *);
+	void setSender(unsigned long, unsigned short);
 };
 #endif

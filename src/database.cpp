@@ -42,3 +42,9 @@ void Database::delete_(string name)
 		entries = (entry_t *)realloc(entries, sizeof(entry_t) * (size /= 2));
 	return;
 }
+
+entry_t * Database::allEntries(int * s)
+{
+	* s = nrentries;
+	return entries;
+}

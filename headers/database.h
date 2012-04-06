@@ -6,7 +6,7 @@ using namespace std;
 
 typedef struct {
 	string * name;
-	int ip;
+	unsigned long ip;
 	int port;	
 } entry_t;
 
@@ -23,8 +23,7 @@ public:
 	//returns 1 if found, 0 otherwise
 	int lookup(string, entry_t *);
 	void delete_(string);
-	
-	
+	entry_t * allEntries(int *);
 	
 };
 #endif
