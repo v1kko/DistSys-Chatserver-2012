@@ -14,9 +14,9 @@ VPATH = src:$(DOC)
 .cpp.o:
 	$(CC) -c $(CFLAGS) $< -o $(OL)/$@
 
-all: database.o connection.o main.o message.o server.o $(BIN)/server verslag.pdf $(HD)/*.h
+all: manager.o database.o connection.o main.o message.o server.o $(BIN)/server verslag.pdf $(HD)/*.h
 
-$(BIN)/server: $(OL)/database.o $(OL)/message.o $(OL)/connection.o $(OL)/server.o $(OL)/main.o
+$(BIN)/server: $(OL)/manager.o $(OL)/database.o $(OL)/message.o $(OL)/connection.o $(OL)/server.o $(OL)/main.o
 	$(CC) $(LDFLAGS) -o $@ $^ 
 
 verslag.pdf: verslag.tex
@@ -32,3 +32,4 @@ connection.o: connection.cpp
 server.o: server.cpp
 main.o: main.cpp
 database.o: database.cpp
+manager.o: manager.cpp

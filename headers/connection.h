@@ -12,9 +12,9 @@ private:
 
 public:
 	Connection(); //Constructor, Port must be set to 2001!
-	Connection(int); //Constructor, set port to arg1
+	Connection(unsigned short); //Constructor, set port to arg1
 	
-	void setDatabase(Database);
+	void setDatabase(Database *);
 	
 	/*
 		Also checks if the message is valid

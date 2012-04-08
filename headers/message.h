@@ -6,12 +6,16 @@ using namespace std;
 #define ALL 2
 #define NONE 0
 #define ALLBUTONE -1
+#define ALLBUTONEADRESS -2
 #define ONE 1
 
 class Message
 {
 private:
-	string data;
+	string mdata, mrecipient;
+	int mtype, msize, mrefnum, mrecvtype;
+	unsigned long mip;
+	unsigned short mport;
 		
 public:	
 	Message(void);

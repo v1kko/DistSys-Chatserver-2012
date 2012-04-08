@@ -5,7 +5,12 @@
 using namespace std;
 
 class Manager {
-
+private:
+	string name, password;
+	int online;
+	unsigned long ip;
+	unsigned short port;
+public:
 	void setName(string);
 	void setPassword(string);
 	string getName(void);
@@ -14,11 +19,8 @@ class Manager {
 	int isOnline(void);
 	
 	//Sets isOnline to true
-	void setAdres(int);
-	void setPort(int);
-	
-	int getAdress(void);
-	int getPort(void);
+	void setAdress(unsigned long, unsigned short);
+	void getAdress(unsigned long *, unsigned short *);
 	
 	void setOffline(void);
 

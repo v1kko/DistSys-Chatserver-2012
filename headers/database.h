@@ -7,7 +7,10 @@ using namespace std;
 typedef struct {
 	string * name;
 	unsigned long ip;
-	int port;	
+	unsigned short port;
+	unsigned int * ref;
+	char directlyconnected;
+	char isClient;	
 } entry_t;
 
 
@@ -19,9 +22,11 @@ public:
 	Database();
 	
 	void insert(entry_t);
-	
+	void insertReplace(entry_t);
+	void insertReplaceWithIp(entry_t);
 	//returns 1 if found, 0 otherwise
 	int lookup(string, entry_t *);
+	int lookup(unsigned long, unsigned short, entry_t *);
 	void delete_(string);
 	entry_t * allEntries(int *);
 	
