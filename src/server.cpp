@@ -18,6 +18,7 @@ Server::Server(unsigned short _port, unsigned long _csip, string _ident)
 	database = new Database();
 	manager = new Manager();
 	connection->setDatabase(database);
+	database->conClients = 0;
 }
 	// Must be format (username password);
 void Server::addManager(string data)
@@ -67,6 +68,7 @@ void Server::start(void)
 				printf("500 - server -> client (Sent) - Registratie gelukt\n");
 				entry.directlyconnected = 1;
 				entry.isClient = 1;
+				database->conClients++;
 				database->insertReplaceWithIp(entry);
 				message.setType(500);
 				message.setMessage("");
@@ -144,6 +146,7 @@ void Server::start(void)
 				message.setType(130);
 				message.setRecipients("#all", ALL);
 				connection->send(message);
+				database->conClients--;
 				database->delete_(*entry.name);	
 				printf("130 - server -> All (Sent)\n");
 			case 130:

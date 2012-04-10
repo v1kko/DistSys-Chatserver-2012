@@ -18,7 +18,8 @@ class Database {
 private:
 	int nrentries, size;
 	entry_t * entries;
-public:	
+public:
+	int conClients;	
 	Database();
 	
 	void insert(entry_t);
