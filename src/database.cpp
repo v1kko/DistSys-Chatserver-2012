@@ -6,31 +6,74 @@ using namespace std;
 
 
 /** TO DO
- *  delete
- *  -efficiencie
- *  -gaten
- *   - dualy linked list miss handiger dan een array??
  *  replace
+ *  lookup
  */
 
 
 Database::Database(){
-	nclients_indirect = 0;
-	nclients_direct = 0;
-	nservers_indirect = 0;
-	nservers_direct = 0;
-	size_clients_indirect = 10;
-	size_clients_direct = 10;
-	size_servers_indirect = 10;
-	size_servers_direct = 10;
-	clients_indirect = (client_i *)malloc(sizeof(client_i) * size_clients_indirect);
-	clients_direct = (client_d *)malloc(sizeof(client_d) * size_clients_direct);
-	servers_indirect = (server_i *)malloc(sizeof(server_i) * size_servers_indirect);
-	servers_direct = (server_d *)malloc(sizeof(server_d) * size_servers_direct);
+	begin_clients_indirect=NULL;
+	end_clients_indirect=NULL;
+	begin_clients_direct=NULL;
+	end_clients_direct=NULL;
+	begin_servers_indirect=NULL;
+	end_servers_indirect=NULL;
+	begin_servers_indirect=NULL;
+	end_servers_indirect=NULL;
 }
+
+void* create_new_entry(int type){
+  switch(type){
+    case 1:{
+      client_i* output = calloc(1,sizeof(client_i));
+      output->next=NULL;
+      output->prev=NULL;
+      output.authorisatie=0;
+      output.socket=0;
+    }break;
+    
+    case 2:{
+      client_d* output = calloc(1,sizeof(client_d));
+      output->next=NULL;
+      output->prev=NULL;
+      output->to=NULL;
+    }break;
+    
+    case 3:{
+      server_d* output = calloc(1,sizeof(server_d));
+      output->next=NULL;
+      output->prev=NULL;
+      output.socket=0;
+      output.is_parent=0;
+      output.ref=0;
+      
+    }break;
+    
+    case 4:{
+      server_i* output = calloc(1,sizeof(server_i));
+      output->next=NULL;
+      output->prev=NULL;
+      output.ip=0;
+      output.port=0;
+      output.ref=0;
+    }break;
+    
+    default:{
+      return NULL;
+    }break;
+  }
+  return output;
+}
+
+/*
+ * checkt nu alleen op socket/ip miss ook wel handig om ook met ref te controlleren.
+ * 
+ */
+
 
 int Database::insert(void* entry, int type){
   int i,error=0;
+  void *temp;
   /*
    * 1 = indirectly connected clients
    * 2 = directly connected clients
@@ -39,47 +82,147 @@ int Database::insert(void* entry, int type){
    */
   switch(type){
     case 1:{
-      for(i=0; i<nclients_indirect; i++){
-	if ((*clients_indirect[i].name).compare((client_i*)entry.name) == 0)return -1;
+      if(end_clients_indirect==NULL){
+	begin_clients_indirect = end_clients_direct = (client_i*)entry;
+	return 0;
       }
-      if(nclients_indirect==size_clients_indirect)
-        clients_indirect = (client_i *)realloc(clients_indirect,sizeof(client_i) * (size_clients_indirect *= 2));
-      clients_indirect[nclients_indirect++]=(client_i*)entry; 
-      return 0;
+      else{
+	temp=begin_clients_indirect;
+	while(temp->next != NULL){
+	  if(strcmp(temp.name,(client_i*)entry.name==0) return 1; 
+	  temp=temp->next;
+	}
+	end_clients_indirect->next=(client_i*)entry;
+	return 0;
+      }
     }break;
     
     case 2:{
-      for(i=0; i<nclients_direct; i++){
-	if ((*clients_direct[i].name).compare((client_d*)entry.name) == 0) return -1;
+      if(end_clients_direct==NULL){
+	begin_clients_direct = end_clients_direct = (client_d*)entry;
+	return 0;
       }
-      if(nclients_direct==size_clients_direct)
-        clients_direct = (client_i *)realloc(clients_direct,sizeof(client_d) * (size_clients_indirect *= 2));
-      clients_indirect[nclients_direct++]=(client_d*)entry; 
-      return 0;
+      else{
+	temp=begin_clients_direct;
+	while(temp->next != NULL){
+	  if(strcmp(temp.name,(client_d*)entry.name==0)return 1; 
+	  temp=temp->next;
+	}
+	end_clients_direct->next=(client_i*)entry;
+	return 0;
+      }
     }break;
     
     case 3:{
-      for(i=0; i<nservers_indirect; i++){
-	if(servers_indirect[i].socket==(server_i*)entry.socket)return -1;
+      if(end_servers_indirect==NULL){
+	begin_servers_indirect = end_servers_indirect = (server_i*)entry;
+	return 0;
       }
-      if(nservers_indirect==size_servers_indirect)
-	servers_indirect = (server_i*)realloc(servers_indirect,sizeof(servers_indirect) * (size_servers_indirect *=2));
-      servers_indirect[nservers_indirect++]=(server_i*)entry;
+      else{
+	temp=begin_servers_indirect;
+	while(temp->next != NULL){
+	  if(temp.ip == (server_i*)entry.ip) return 1;
+	  temp=temp->next;
+	}
+	end_servers_indirect->next=(server_i*)entry;
+	return 0;
+      }
     }break;
     
     case 4:{
-      for(i=0; i<nservers_direct; i++){
-	if(servers_direct[i].socket==(server_d*)entry.socket)return -1;
+      if(end_servers_direct==NULL){
+	begin_servers_direct = end_servers_direct = (server_d*)entry;
+	return 0;
       }
-      if(nservers_direct==size_servers_direct)
-	servers_direct = (server_i*)realloc(servers_direct,sizeof(servers_direct) * (size_servers_direct *=2));
-      servers_direct[nservers_direct++]=(server_d*)entry;
+      else{
+	temp=begin_servers_direct;
+	while(temp->next != NULL){
+	  if(temp.socket == (server_i*)entry.socket) return 1;
+	  temp=temp->next;
+	}
+	end_servers_direct->next=(server_d*)entry;
+	return 0;
+      }
+    }break;
     
+    default {
+      return 1;
     }break;
   }
 }
 
+int delete_(void* entry, int type){
+  switch(type){
+    case 1:{
+      temp=begin_clients_indirect;
+      while(temp->next != NULL){
+        if(strcmp(temp.name,(client_i*)entry.name==0){
+	  temp->prev->next=temp->next;
+	  temp->next->prev=temp->prev;
+	  delete temp;
+	  return 0;
+	} 
+        temp=temp->next;
+      }  
+      return 1;
+    }break;
+    
+    case 2:{
+      temp=begin_clients_direct;
+      while(temp->next != NULL){
+        if(strcmp(temp.name,(client_d*)entry.name==0){
+	  temp->prev->next=temp->next;
+	  temp->next->prev=temp->prev;
+	  delete temp;
+	  return 0;
+	} 
+        temp=temp->next;
+      }  
+      return 1;
+    
+    }break;
+    
+    case 3:{
+      temp=begin_servers_indirect;
+      while(temp->next != NULL){
+        if(temp.ip==(server_i*)entry.ip){
+	  temp->prev->next=temp->next;
+	  temp->next->prev=temp->prev;
+	  delete temp;
+	  return 0;
+	} 
+        temp=temp->next;
+      }  
+      return 1;
+    
+    }break;
+    
+    case 4:{
+      temp=begin_servers_direct;
+      while(temp->next != NULL){
+        if(temp.socket==(server_d*)entry.socket){
+	  temp->prev->next=temp->next;
+	  temp->next->prev=temp->prev;
+	  delete temp;
+	  return 0;
+	} 
+        temp=temp->next;
+      }  
+      return 1;
+    
+    }break;
+    
+    default{
+      return 1;
+    }break;
+  }
+
+}
+
+
 //hieronder nog vervangen
+
+
 
 void Database::insertReplace(entry_t entry)
 {
