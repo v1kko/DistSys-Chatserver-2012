@@ -8,9 +8,9 @@ class Connection
 private:
 	char * buffer;
 	Database * database;
-	int sd;
 
 public:
+	int sd;
 	Connection(); //Constructor, Port must be set to 2001!
 	Connection(unsigned short); //Constructor, set port to arg1
 	
