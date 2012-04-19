@@ -77,7 +77,7 @@ void Server::start(void)
 				
 				printf("110 - server -> All but client (Sent) - user added\n");
 				message.setType(110);
-				message.setRecipients(*entry.name, ALLBUTONE);
+				message.setRecipients(*entry.name, ALLBUTONECLIENT);
 				sprintf(cbuffer, "%6d%6d%s", 1, 1, (*entry.name).c_str());
 				buffer = cbuffer;
 				message.setMessage(buffer);
@@ -104,7 +104,7 @@ void Server::start(void)
 				}
 				if ( parentip == entry.ip && parentport == entry.port ) {
 					printf("110 - server -> server (Sending to clients and non-parent servers)\n");
-					message.setRecipients(parentname, ALLBUTONEADRESS);
+					message.setRecipients(parentname, ALLBUTONESERVER);
 					connection->send(message);
 					
 					if (!buffer.substr(0, 6).compare(buffer.substr(6, 6))) {
@@ -154,7 +154,7 @@ void Server::start(void)
 				if (!database->lookup(entry.ip, entry.port, &entry))
 					break;
 				if (database->lookup(buffer.substr(0, buffer.find_first_of(' ')), NULL)) {
-					message.setRecipients(*entry.name, ALLBUTONEADRESS);
+					message.setRecipients(*entry.name, ALLBUTONESERVER);
 					connection->send(message);
 					printf("130 - server -> All (Sent)\n");
 					database->delete_(buffer);
@@ -204,7 +204,7 @@ void Server::start(void)
 					break;
 				*entry.name = buffer.substr(temp+1, string::npos);
 				*entry.ref = 0;
-				message.setRecipients(*entry.name, ALLBUTONEADRESS);
+				message.setRecipients(*entry.name, ALLBUTONESERVER);
 				connection->send(message);
 				printf("170 - server -> All (Sent)\n");
 				break;
