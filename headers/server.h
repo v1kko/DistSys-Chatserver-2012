@@ -18,6 +18,7 @@ private:
 	unsigned short port;
 
 	void incomingMessage(Message);
+	void monitor(void);
 	
 public:
 	//port, csip, ident
