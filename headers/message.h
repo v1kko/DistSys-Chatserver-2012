@@ -4,10 +4,10 @@
 using namespace std;
 
 #define ALL 2
-#define NONE 0
-#define ALLBUTONE -1
-#define ALLBUTONEADRESS -2
 #define ONE 1
+#define NONE 0
+#define ALLBUTONECLIENT -1
+#define ALLBUTONESERVER -2
 
 class Message
 {
@@ -39,10 +39,11 @@ public:
 		Since all our connected clients/servers have a name 
 		we can parse that name
 
+                2 = send to all
 		1 = send to that person
+                0 = send to none (default)
 		-1 = send to everyone but person
-		2 = send to all
-		0 = send to none (default)
+		-2 = send to everyone but server
 	*/
 	void setRecipients(string, int);
 	string getRecipients(int *);

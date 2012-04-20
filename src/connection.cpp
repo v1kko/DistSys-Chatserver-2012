@@ -90,7 +90,7 @@ void Connection::send(Message message)
 					this->send(message, entries[i].ip, entries[i].port);
 			}
 			break;
-		case ALLBUTONE:
+		case ALLBUTONECLIENT:
 			entries  = database->allEntries(&size);
 			for (int i = 0 ; i < size ; i++) {
 				if (entries[i].name->compare(recipient) != 0) {
@@ -100,7 +100,7 @@ void Connection::send(Message message)
 				}
 			}
 			break;
-		case ALLBUTONEADRESS:
+		case ALLBUTONESERVER:
 			if (database->lookup(recipient, &entry) != 0) {
 				entries  = database->allEntries(&size);
 				for (int i = 0 ; i < size ; i++) {
