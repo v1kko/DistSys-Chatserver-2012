@@ -34,6 +34,7 @@ void Server::addManager(string data)
 void Server::start(void)
 {
 	struct timeval tv;
+	time_t tstart, tend;
 	fd_set rsd;
 	FD_ZERO(&rsd);
 	FD_SET(connection->sd, &rsd);	
@@ -50,6 +51,7 @@ void Server::start(void)
 	printf("601 - Server -> Control server: Request for parent Server\n");
 	tv.tv_sec = 2;
 	tv.tv_usec = 0;
+	time(&tstart);
 	while(1) {
 		switch(select((connection->sd)+1, &rsd, NULL, NULL, &tv)) { 
 			case -1:
@@ -57,8 +59,14 @@ void Server::start(void)
 				break;
 			case 0:
 				this->monitor();	
+				time(&tstart);
 				break;
 			default:
+				time(&tend);
+				if (tend - tstart >= 2) {
+					this->monitor();
+					time(&tstart);
+				}
 				tv.tv_sec = 2;
 				tv.tv_usec = 0;
 				message = connection->listen();
