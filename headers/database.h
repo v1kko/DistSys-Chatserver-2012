@@ -29,6 +29,7 @@ typedef struct{
 
 typedef struct{
   server_i *next,*prev;
+  string * name;
   unsigned long ip;
   unsigned short port;
   unsigned int ref;

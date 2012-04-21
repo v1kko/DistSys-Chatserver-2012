@@ -79,6 +79,19 @@ void Server::start(void)
 void Server::stop(void){}
 
 void Server::monitor(void) {
-	server * list;
-	return_list(list,SERVER);
+	server * sentry;
+	Message message;
+
+	database->return_list(sentry,SERVER);
+	message.setType(140);
+	message.setMessage(ident);
+	while (sentry != NULL) {
+		message.setRecipients(); //Doenst work jet because of new database implementation
+		connection->send(message);
+		sentry->pingtimeout--;
+		if(sentry->pingtimeout <=0) {
+			//Also send 604 i believe?
+			database->delete_(sentry, SERVER);	
+		}
+	}
 }
