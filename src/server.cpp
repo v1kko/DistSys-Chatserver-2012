@@ -63,7 +63,7 @@ void Server::start(void)
 				break;
 			default:
 				time(&tend);
-				if (tend - tstart >= 2) {
+				if (tend - tstart > 2) {
 					this->monitor();
 					time(&tstart);
 				}
@@ -79,5 +79,6 @@ void Server::start(void)
 void Server::stop(void){}
 
 void Server::monitor(void) {
-	
+	server * list;
+	return_list(list,SERVER);
 }
