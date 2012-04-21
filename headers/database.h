@@ -12,8 +12,11 @@ using namespace std;
 typedef struct{
   string* name;
   client_i *next,*prev;
-  int authorisatie;
-  unsigned short socket;
+  char authorisatie;
+  unsigned short port;
+  unsigned long ip;
+  int ref;
+  char pingtimeout;
 }client_d;
 
 typedef struct{
@@ -29,6 +32,7 @@ typedef struct{
   unsigned long ip;
   unsigned short port;
   unsigned int ref;
+  char pingtimeout;
 }server;
 
 class Database {
