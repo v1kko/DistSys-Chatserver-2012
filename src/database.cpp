@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <database.h>
+#include <cstring>
 
 using namespace std;
 
@@ -16,53 +17,31 @@ Database::Database(){
 	end_clients_indirect=NULL;
 	begin_clients_direct=NULL;
 	end_clients_direct=NULL;
-	begin_servers_indirect=NULL;
-	end_servers_indirect=NULL;
-	begin_servers_indirect=NULL;
-	end_servers_indirect=NULL;
+	begin_servers_direct=NULL;
+	end_servers_direct=NULL;
 }
 
 void* create_new_entry(int type){
   switch(type){
     case 1:{
-      client_i* output = calloc(1,sizeof(client_i));
-      output->next=NULL;
-      output->prev=NULL;
-      output.authorisatie=0;
-      output.socket=0;
+      client_i* output = (client_i*)calloc(1,sizeof(client_i));
+   	  return output;
     }break;
     
     case 2:{
-      client_d* output = calloc(1,sizeof(client_d));
-      output->next=NULL;
-      output->prev=NULL;
-      output->to=NULL;
+      client_d* output = (client_d*)calloc(1,sizeof(client_d));
+      return output;
     }break;
     
     case 3:{
-      server_d* output = calloc(1,sizeof(server_d));
-      output->next=NULL;
-      output->prev=NULL;
-      output.socket=0;
-      output.is_parent=0;
-      output.ref=0;
-      
+      server* output = (server*)calloc(1,sizeof(server));
+      return output;
     }break;
-    
-    case 4:{
-      server_i* output = calloc(1,sizeof(server_i));
-      output->next=NULL;
-      output->prev=NULL;
-      output.ip=0;
-      output.port=0;
-      output.ref=0;
-    }break;
-    
+ 
     default:{
       return NULL;
     }break;
   }
-  return output;
 }
 
 /*
@@ -73,8 +52,7 @@ void* create_new_entry(int type){
 
 int Database::insert(void* entry, int type){
   int i,error=0;
-  void *temp;
-  /*
+   /*
    * 1 = indirectly connected clients
    * 2 = directly connected clients
    * 3 = indirectly connected servers
@@ -82,22 +60,24 @@ int Database::insert(void* entry, int type){
    */
   switch(type){
     case 1:{
+      client_i * temp;
       if(end_clients_indirect==NULL){
-	begin_clients_indirect = end_clients_direct = (client_i*)entry;
-	return 0;
+	      begin_clients_indirect = end_clients_indirect = (client_i*)entry;
+	      return 0;
       }
       else{
-	temp=begin_clients_indirect;
-	while(temp->next != NULL){
-	  if(strcmp(temp.name,(client_i*)entry.name==0) return 1; 
-	  temp=temp->next;
-	}
-	end_clients_indirect->next=(client_i*)entry;
-	return 0;
+	      temp=begin_clients_indirect;
+	      while(temp->next != NULL){
+//TODO    if(strcmp(temp->name,((client_i*)entry)->name)==0) return 1; 
+	        temp=temp->next;
+    	  }
+	      end_clients_indirect->next=(client_i*)entry;
+	      return 0;
       }
     }break;
     
     case 2:{
+      client_d * temp;
       if(end_clients_direct==NULL){
 	begin_clients_direct = end_clients_direct = (client_d*)entry;
 	return 0;
@@ -105,125 +85,111 @@ int Database::insert(void* entry, int type){
       else{
 	temp=begin_clients_direct;
 	while(temp->next != NULL){
-	  if(strcmp(temp.name,(client_d*)entry.name==0)return 1; 
+//TODO	  if(strcmp(temp.name,(client_d*)entry.name==0)return 1; 
 	  temp=temp->next;
 	}
-	end_clients_direct->next=(client_i*)entry;
+	end_clients_direct->next=(client_d*)entry;
 	return 0;
       }
     }break;
-    
+
     case 3:{
-      if(end_servers_indirect==NULL){
-	begin_servers_indirect = end_servers_indirect = (server_i*)entry;
-	return 0;
-      }
-      else{
-	temp=begin_servers_indirect;
-	while(temp->next != NULL){
-	  if(temp.ip == (server_i*)entry.ip) return 1;
-	  temp=temp->next;
-	}
-	end_servers_indirect->next=(server_i*)entry;
-	return 0;
-      }
-    }break;
-    
-    case 4:{
+      server * temp;
       if(end_servers_direct==NULL){
-	begin_servers_direct = end_servers_direct = (server_d*)entry;
+	begin_servers_direct = end_servers_direct = (server*)entry;
 	return 0;
       }
       else{
 	temp=begin_servers_direct;
 	while(temp->next != NULL){
-	  if(temp.socket == (server_i*)entry.socket) return 1;
+//TODO	  if(temp.socket == (server*)entry.socket) return 1;
 	  temp=temp->next;
 	}
-	end_servers_direct->next=(server_d*)entry;
+	end_servers_direct->next=(server*)entry;
 	return 0;
       }
     }break;
     
-    default {
+    default: {
       return 1;
     }break;
   }
 }
 
-int delete_(void* entry, int type){
+int Database::delete_(void* entry, int type){
   switch(type){
     case 1:{
+            client_i * temp;
       temp=begin_clients_indirect;
       while(temp->next != NULL){
-        if(strcmp(temp.name,(client_i*)entry.name==0){
+//TODO        if(strcmp(temp.name,(client_i*)entry.name==0){
 	  temp->prev->next=temp->next;
 	  temp->next->prev=temp->prev;
 	  delete temp;
 	  return 0;
-	} 
+//	} 
         temp=temp->next;
       }  
       return 1;
     }break;
     
     case 2:{
+      client_d * temp;
       temp=begin_clients_direct;
       while(temp->next != NULL){
-        if(strcmp(temp.name,(client_d*)entry.name==0){
+//TODO        if(strcmp(temp.name,(client_d*)entry.name==0){
 	  temp->prev->next=temp->next;
 	  temp->next->prev=temp->prev;
 	  delete temp;
 	  return 0;
-	} 
+//	} 
         temp=temp->next;
       }  
       return 1;
     
     }break;
-    
+        
     case 3:{
-      temp=begin_servers_indirect;
-      while(temp->next != NULL){
-        if(temp.ip==(server_i*)entry.ip){
-	  temp->prev->next=temp->next;
-	  temp->next->prev=temp->prev;
-	  delete temp;
-	  return 0;
-	} 
-        temp=temp->next;
-      }  
-      return 1;
-    
-    }break;
-    
-    case 4:{
+            server * temp;
       temp=begin_servers_direct;
       while(temp->next != NULL){
-        if(temp.socket==(server_d*)entry.socket){
+//TODO        if(temp.socket==(server_d*)entry.socket){
 	  temp->prev->next=temp->next;
 	  temp->next->prev=temp->prev;
 	  delete temp;
 	  return 0;
-	} 
+//	} 
         temp=temp->next;
       }  
       return 1;
     
     }break;
     
-    default{
+    default:{
       return 1;
     }break;
   }
 
 }
 
+int Database::replace(void* entry, int type) {
+return 0;
+}
+int Database::return_list(void* entry, int type) {
+return 0;
+}
+int Database::look_up_name(string* koekje) {
+return 0;
+}
+int Database::look_up_ip(unsigned long ip) {
+return 0;
+}
+
 
 //hieronder nog vervangen
 
 
-
+/*
 void Database::insertReplace(entry_t entry)
 {
 	entry_t entry1;
@@ -293,4 +259,4 @@ entry_t * Database::allEntries(int * s)
 {
 	* s = nrentries;
 	return entries;
-}
+}*/
