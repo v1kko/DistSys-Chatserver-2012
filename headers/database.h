@@ -35,10 +35,13 @@ public:
 
 	void insert(entry_t);
 	void insertReplace(entry_t);
-	
+	void insertReplaceWithIp(entry_t);
+		
 	//returns 1 if found, 0 otherwise
 	int lookup(string, entry_t *);
+
 	int lookupServer(unsigned long, unsigned short, entry_t **);
+	int lookupDclient(unsigned long, unsigned short, entry_t *);
 
 	void delete_(string);
 	void freeEntry(entry_t);

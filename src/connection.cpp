@@ -91,7 +91,7 @@ void Connection::send(Message message)
 				}
 			}
 			break;
-		case ALLBUTONESERVER:
+		case ALLBUTONE:
 			if (database->lookup(recipient, &entry) != 0) {
 				for (int j = 0; j < 2 ; j ++ ) {
 					entries  = database->allEntries(j, &size);

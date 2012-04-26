@@ -1,7 +1,7 @@
 void Server::incomingMessage(Message  message) {
 
 	int type, temp, temp1, size, ref;
-	string buffer;
+	string buffer, name;
 	char cbuffer[100];
 	entry_t entry, * entries;
 
@@ -12,8 +12,8 @@ void Server::incomingMessage(Message  message) {
 	switch (type) {
 		case 100:
 			printf("100 - client -> server (Received)\n");
-			entry.name = new string(buffer.substr(0, buffer.find_first_of(" ")));
-			if (database->lookup(*entry.name, NULL)) {
+			name = buffer.substr(0, buffer.find_first_of(" "));
+			if (database->lookup(name, NULL)) {
 				printf("510 - server -> client (Sent) - Registratie mislukt\n");
 				message.setType(510);
 				message.setReferenceNumber(0);
@@ -22,9 +22,7 @@ void Server::incomingMessage(Message  message) {
 				break;
 			}
 			printf("500 - server -> client (Sent) - Registratie gelukt\n");
-			entry.directlyconnected = 1;
-			entry.isClient = 1;
-			database->conClients++;
+			entry = database->createEntry(name, entry.ip, entry.port, DCLIENT);
 			database->insertReplaceWithIp(entry);
 			message.setType(500);
 			message.setMessage("");
@@ -33,14 +31,25 @@ void Server::incomingMessage(Message  message) {
 			
 			printf("110 - server -> All but client (Sent) - user added\n");
 			message.setType(110);
-			message.setRecipients(*entry.name, ALLBUTONECLIENT);
+			message.setRecipients(*entry.name, ALLBUTONE);
 			sprintf(cbuffer, "%6d%6d%s", 1, 1, (*entry.name).c_str());
 			buffer = cbuffer;
 			message.setMessage(buffer);
 			connection->send(message);
 			
 			printf("110 - server -> client (Sending) - user list\n");
-			entries = database->allEntries(&size);
+
+			//Send to Clients
+			entries = database->allEntries(DCLIENT,&size);
+			for (int i = 0 ; i < size ; i++) {
+					sprintf(cbuffer, "%6d%6d%s", i+1, size, (*entries[i].name).c_str());
+					buffer = cbuffer;
+					message.setMessage(buffer);
+					message.setRecipients(*entry.name, ONE);
+					connection->send(message);
+			}			
+			//Send to servers
+			entries = database->allEntries(SERVER,&size);
 			for (int i = 0 ; i < size ; i++) {
 					sprintf(cbuffer, "%6d%6d%s", i+1, size, (*entries[i].name).c_str());
 					buffer = cbuffer;
@@ -52,7 +61,7 @@ void Server::incomingMessage(Message  message) {
 		case 110:
 			printf("110 - server -> server (Received)\n");
 			if (buffer.length() > 12) {
-				entry.name = new string (buffer.substr(12));
+				name = buffer.substr(12);
 				message.getSender(&entry.ip, &entry.port);
 				entry.directlyconnected = 0;
 				entry.isClient = 1;

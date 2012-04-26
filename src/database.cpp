@@ -58,9 +58,29 @@ void Database::insertReplace(entry_t entry)
 	db->entries[db->nrentries++] = entry;
 }
 
+void Database::insertReplaceWithIp(entry_t entry)
+{
+	int type = entry.type;
+	entry_list_t * db = &list[type];
+	entry_t * entry1;
+	if (type == SERVER) {
+		if (this->lookupServer(entry.ip, entry.port, &entry1)) {
+			this->delete_(*entry1->name);
+		}
+	}
+	if (type -= DCLIENT) {
+		if (this->lookupDclient(entry.ip, entry.port, entry1)) {
+			this->delete_(*entry1->name);
+		}
+	}
+	if (db->size == db->nrentries)
+		db->entries = (entry_t *)realloc(db->entries, sizeof(entry_t) * (db->size *= 2));
+	db->entries[db->nrentries++] = entry;
+}
+
 int Database::lookup(string name, entry_t * entry)
 {
-	for (int j = 0 ; j < 3 ; j++) {
+	for (int j = 0; j < 3 ; j++) {
 		for (int i = 0 ; i < list[j].nrentries ; i++) {
 			if ((*list[j].entries[i].name).compare(name) == 0) {
 				if (entry != NULL)
@@ -82,6 +102,19 @@ int Database::lookupServer(unsigned long ip, unsigned short port, entry_t ** ent
 		}
 	}
 	return 0;
+}
+
+int Database::lookupDclient(unsigned long ip, unsigned short port, entry_t * entry)
+{
+	for (int i = 0 ; i < list[SERVER].nrentries ; i++) {
+		if (list[SERVER].entries[i].ip == ip && list[SERVER].entries[i].port == port) {
+			if (entry != NULL)
+				*entry = list[SERVER].entries[i];
+			return 1;	
+		}
+	}
+	return 0;
+
 }
 
 void Database::delete_(string name)
