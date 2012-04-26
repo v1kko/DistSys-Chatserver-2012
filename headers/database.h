@@ -4,32 +4,45 @@
 #include <string>
 using namespace std;
 
-typedef struct {
+#define SERVER 0
+#define DCLIENT 1
+#define ICLIENT 2
+
+
+typedef struct entry_t {
 	string * name;
 	unsigned long ip;
 	unsigned short port;
 	unsigned int * ref;
-	char directlyconnected;
-	char isClient;	
+	int type;
+	entry_t * server;
 } entry_t;
 
 
+typedef struct entry_list_t {
+	int nrentries;
+	int size;
+	entry_t * entries;
+} entry_list_t;
+
 class Database {
 private:
-	int nrentries, size;
-	entry_t * entries;
+	entry_list_t * list;
 public:
-	int conClients;	
 	Database();
 	
+	entry_t createEntry(string, long, short, int);
+
 	void insert(entry_t);
 	void insertReplace(entry_t);
-	void insertReplaceWithIp(entry_t);
+	
 	//returns 1 if found, 0 otherwise
 	int lookup(string, entry_t *);
-	int lookup(unsigned long, unsigned short, entry_t *);
+	int lookupServer(unsigned long, unsigned short, entry_t **);
+
 	void delete_(string);
-	entry_t * allEntries(int *);
+	void freeEntry(entry_t);
+	entry_t * allEntries(int, int *);
 	
 };
 #endif
