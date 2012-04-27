@@ -17,6 +17,7 @@ entry_t Database::createEntry(string name, long ip, short port, int type) {
 	entry_t entry, * entry1;
 	entry.name = 0;
 	entry.ref = 0;
+	entry.pingtimeout=PINGTIMEOUT;
 	if (type == ICLIENT) {
 		if (!lookupServer(ip, port, &entry1)) {
 			return entry;

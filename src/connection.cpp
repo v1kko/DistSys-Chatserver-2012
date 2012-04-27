@@ -78,6 +78,9 @@ void Connection::send(Message message)
 			break;
 		case ONE:
 			if (database->lookup(recipient, &entry) != 0) {
+				if (entry.type==ICLIENT) {
+					entry = *entry.server;
+				}
 				message.setReferenceNumber((*entry.ref)++);
 				this->send(message, entry.ip, entry.port);
 			}

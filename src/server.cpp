@@ -20,7 +20,6 @@ Server::Server(unsigned short _port, unsigned long _csip, string _ident)
 	database = new Database();
 	manager = new Manager();
 	connection->setDatabase(database);
-	database->conClients = 0;
 }
 	// Must be format (username password);
 void Server::addManager(string data)

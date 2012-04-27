@@ -8,12 +8,14 @@ using namespace std;
 #define DCLIENT 1
 #define ICLIENT 2
 
+#define PINGTIMEOUT 2
 
 typedef struct entry_t {
 	string * name;
 	unsigned long ip;
 	unsigned short port;
 	unsigned int * ref;
+	char pingtimeout;
 	int type;
 	entry_t * server;
 } entry_t;
