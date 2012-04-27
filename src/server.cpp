@@ -35,8 +35,6 @@ void Server::start(void)
 	struct timeval tv;
 	time_t tstart, tend;
 	fd_set rsd;
-	FD_ZERO(&rsd);
-	FD_SET(connection->sd, &rsd);	
 	printf("Starting up: Our Tag is %s\n", ident.c_str());
 	Message message;
 	//unsigned long ip;
@@ -50,6 +48,8 @@ void Server::start(void)
 	printf("601 - Server -> Control server: Request for parent Server\n");
 	tv.tv_sec = 2;
 	tv.tv_usec = 0;
+	FD_ZERO(&rsd);
+	FD_SET(connection->sd, &rsd);	
 	time(&tstart);
 	while(1) {
 		switch(select((connection->sd)+1, &rsd, NULL, NULL, &tv)) { 
@@ -59,6 +59,10 @@ void Server::start(void)
 			case 0:
 				this->monitor();	
 				time(&tstart);
+				tv.tv_sec = 2;
+				tv.tv_usec = 0;
+				FD_ZERO(&rsd);
+				FD_SET(connection->sd, &rsd);	
 				break;
 			default:
 				time(&tend);
@@ -68,6 +72,8 @@ void Server::start(void)
 				}
 				tv.tv_sec = 2;
 				tv.tv_usec = 0;
+				FD_ZERO(&rsd);
+				FD_SET(connection->sd, &rsd);	
 				message = connection->listen();
 				this->incomingMessage(message);
 				break;
@@ -81,20 +87,28 @@ void Server::monitor(void) {
 	entry_t * entries, entry, entry1;
 	Message message;
 	int size;
-
 	entries = database->allEntries(SERVER, &size);
 	message.setType(140);
 	message.setMessage(ident);
 	for(int i = 0 ; i < size ; i++) {
 		message.setRecipients(*entries[i].name, ONE);
 		connection->send(message);
-		*entries[i].pingtimeout--;
+		(*entries[i].pingtimeout)--;
 		if(*entries[i].pingtimeout <=0) {
 			//Also send 604 i believe?
 			entry = entries[i];
 			database->delete_(*entry.name);
 			while(database->lookupIclient(entry.ip, entry.port, &entry1))
 				database->delete_(*entry1.name);
+		}
+	}
+	entries = database->allEntries(DCLIENT, &size);
+	for(int i = 0 ; i < size ; i++) {
+		message.setRecipients(*entries[i].name, ONE);
+		connection->send(message);
+		(*entries[i].pingtimeout)--;
+		if(*entries[i].pingtimeout <=0) {
+			database->delete_(*entries[i].name);
 		}
 	}
 }

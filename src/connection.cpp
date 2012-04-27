@@ -82,7 +82,7 @@ void Connection::send(Message message)
 					if(database->lookupServer(entry.ip, entry.port, &pentry))
 						message.setReferenceNumber((*pentry->ref)++);
 				} else {
-					message.setReferenceNumber((*pentry->ref)++);
+					message.setReferenceNumber((*entry.ref)++);
 				}
 				this->send(message, entry.ip, entry.port);
 			}

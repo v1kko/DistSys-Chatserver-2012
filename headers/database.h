@@ -8,7 +8,7 @@ using namespace std;
 #define DCLIENT 1
 #define ICLIENT 2
 
-#define PINGTIMEOUT 2
+#define PINGTIMEOUT 3
 
 typedef struct entry_t {
 	string * name;

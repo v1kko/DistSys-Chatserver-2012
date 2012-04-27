@@ -63,15 +63,15 @@ void Database::insertReplaceWithIp(entry_t entry)
 {
 	int type = entry.type;
 	entry_list_t * db = &list[type];
-	entry_t * entry1;
+	entry_t * entry1, entry2;
 	if (type == SERVER) {
 		if (this->lookupServer(entry.ip, entry.port, &entry1)) {
 			this->delete_(*entry1->name);
 		}
 	}
-	if (type -= DCLIENT) {
-		if (this->lookupDclient(entry.ip, entry.port, entry1)) {
-			this->delete_(*entry1->name);
+	if (type == DCLIENT) {
+		if (this->lookupDclient(entry.ip, entry.port, &entry2)) {
+			this->delete_(*entry2.name);
 		}
 	}
 	if (db->size == db->nrentries)

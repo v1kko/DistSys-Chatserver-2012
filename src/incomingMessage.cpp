@@ -143,6 +143,7 @@ void Server::incomingMessage(Message  message) {
 			connection->send(message);
 			database->delete_(*entry.name);	
 			printf("130 - server -> All (Sent)\n");
+			break;
 		case 130:
 			printf("130 - server -> server (Received)\n");
 			if (!database->lookupServer(entry.ip, entry.port, &pentry))
@@ -187,6 +188,7 @@ void Server::incomingMessage(Message  message) {
 				break;
 			}
 			if (database->lookupDclient(entry.ip, entry.port, &entry)) {
+
 				*entry.pingtimeout=PINGTIMEOUT;
 				break;
 			}
@@ -205,7 +207,7 @@ void Server::incomingMessage(Message  message) {
 				connection->send(message);
 				break;
 			}
-			
+			name = *entry.name;	
 			//Replace the entry
 			entry = database->createEntry(buffer, entry.ip, entry.port,DCLIENT);
 			database->insertReplaceWithIp(entry);
@@ -219,7 +221,7 @@ void Server::incomingMessage(Message  message) {
 			
 			//Inform everyone of the namechange
 			printf("170 - server -> All (Sent)\n");
-			buffer.insert(0, " ").insert(0, *entry.name);
+			buffer.insert(0, " ").insert(0, name);
 			message.setType(170);
 			message.setRecipients(*entry.name, ALL);
 			message.setMessage(buffer);
