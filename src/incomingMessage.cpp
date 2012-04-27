@@ -11,6 +11,7 @@ void Server::incomingMessage(Message  message) {
 	message.getSender(&entry.ip, &entry.port);
 	switch (type) {
 		case 100:
+			//Check if name is available
 			printf("100 - client -> server (Received)\n");
 			name = buffer.substr(0, buffer.find_first_of(" "));
 			if (database->lookup(name, NULL)) {
@@ -21,6 +22,8 @@ void Server::incomingMessage(Message  message) {
 				connection->send(message, entry.ip, entry.port);
 				break;
 			}
+
+			//Register in network
 			printf("500 - server -> client (Sent) - Registratie gelukt\n");
 			entry = database->createEntry(name, entry.ip, entry.port, DCLIENT);
 			database->insertReplaceWithIp(entry);
@@ -39,7 +42,7 @@ void Server::incomingMessage(Message  message) {
 			
 			printf("110 - server -> client (Sending) - user list\n");
 
-			//Send to Clients
+			//Send clientlsit to new client
 			entries = database->allEntries(DCLIENT,&size);
 			for (int i = 0 ; i < size ; i++) {
 					sprintf(cbuffer, "%6d%6d%s", i+1, size, 
@@ -49,7 +52,6 @@ void Server::incomingMessage(Message  message) {
 					message.setRecipients(*entry.name, ONE);
 					connection->send(message);
 			}			
-			//Send to servers
 			entries = database->allEntries(SERVER,&size);
 			for (int i = 0 ; i < size ; i++) {
 					sprintf(cbuffer, "%6d%6d%s", i+1, size, 
@@ -133,6 +135,7 @@ void Server::incomingMessage(Message  message) {
 			}
 			break;
 		case 120:
+			//Delete the client from our database and send to others
 			printf("120 - client -> server (Received)\n");
 			if (! database->lookupDclient(entry.ip, entry.port, &entry)) {
 				break;	
@@ -140,11 +143,12 @@ void Server::incomingMessage(Message  message) {
 			message.setMessage(*entry.name + " " + buffer);
 			message.setType(130);
 			message.setRecipients("#all", ALL);
-			connection->send(message);
 			database->delete_(*entry.name);	
+			connection->send(message);
 			printf("130 - server -> All (Sent)\n");
 			break;
 		case 130:
+			//Delete the client from our database and send to others
 			printf("130 - server -> server (Received)\n");
 			if (!database->lookupServer(entry.ip, entry.port, &pentry))
 				break;
@@ -242,7 +246,7 @@ void Server::incomingMessage(Message  message) {
 			message.setRecipients(name, ALLBUTONE);
 			connection->send(message);
 
-			//Update entry (sneaky mode) TODO
+			//Update entry (sneaky mode)
 			*entry.name = buffer.substr(temp+1, string::npos);
 			printf("170 - server -> All (Sent)\n");
 			break;
@@ -326,6 +330,9 @@ void Server::incomingMessage(Message  message) {
 			break;
 		case 602:
 			printf("602 - Control server -> server (Received)\n");
+			if (entry.ip != csip || entry.port != csport)
+				break;
+
 			if (buffer.compare("none") == 0) {
 				printf("602 - No parent received (Now root of network)\n");
 				break;
@@ -352,7 +359,9 @@ void Server::incomingMessage(Message  message) {
 			message.setRecipients(name, ONE);
 			connection->send(message);
 			break;
-
+		case 604:
+			//TODO
+			break;
 		default:
 			break;		
 	}

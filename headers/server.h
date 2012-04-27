@@ -14,7 +14,7 @@ private:
 	Manager * manager;
 	Database * database;
 	string ident, parentname;
-	unsigned long csip, parentfirst, parentip, parentport, csref;
+	unsigned long csip, csport, parentfirst, parentip, parentport, csref;
 	unsigned short port;
 
 	void incomingMessage(Message);

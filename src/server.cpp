@@ -14,6 +14,7 @@ Server::Server(unsigned short _port, unsigned long _csip, string _ident)
 {
 	port = _port;
 	csip = _csip;
+	csport = htons(2001);
 	csref = 0;
 	ident = _ident;
 	connection = new Connection (port);
@@ -44,7 +45,7 @@ void Server::start(void)
 	message.setReferenceNumber(csref++);
 	message.setMessage(ident);
 	
-	connection->send(message, csip, htons(2001));
+	connection->send(message, csip, csport);
 	printf("601 - Server -> Control server: Request for parent Server\n");
 	tv.tv_sec = 2;
 	tv.tv_usec = 0;
@@ -87,6 +88,8 @@ void Server::monitor(void) {
 	entry_t * entries, entry, entry1;
 	Message message;
 	int size;
+
+	//Check servers
 	entries = database->allEntries(SERVER, &size);
 	message.setType(140);
 	message.setMessage(ident);
@@ -95,20 +98,35 @@ void Server::monitor(void) {
 		connection->send(message);
 		(*entries[i].pingtimeout)--;
 		if(*entries[i].pingtimeout <=0) {
-			//Also send 604 i believe?
 			entry = entries[i];
+			//send 603 because a server is down
+			message.setType(603);
+			message.setReferenceNumber(csref++);
+			message.setMessage(*entry.name);
 			database->delete_(*entry.name);
+			connection->send(message, csip, csport);
+			//Remove children of dead server
 			while(database->lookupIclient(entry.ip, entry.port, &entry1))
+				message.setType(130);
+				message.setRecipients(*entry1.name, ALL);
+				message.setMessage(*entry1.name + " Ping Timeout");
 				database->delete_(*entry1.name);
+				connection->send(message);
 		}
 	}
+
+	//Check DClients
 	entries = database->allEntries(DCLIENT, &size);
 	for(int i = 0 ; i < size ; i++) {
 		message.setRecipients(*entries[i].name, ONE);
 		connection->send(message);
 		(*entries[i].pingtimeout)--;
 		if(*entries[i].pingtimeout <=0) {
+			message.setType(130);
+			message.setRecipients(*entries[i].name, ALL);
+			message.setMessage(*entries[i].name + " Ping Timeout");
 			database->delete_(*entries[i].name);
+			connection->send(message);
 		}
 	}
 }
