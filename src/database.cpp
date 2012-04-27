@@ -22,7 +22,6 @@ entry_t Database::createEntry(string name, long ip, short port, int type) {
 		if (!lookupServer(ip, port, &entry1)) {
 			return entry;
 		}
-		entry.server = entry1;
 	}
 	entry.name = new string(name);
 	entry.ref = (unsigned int *)calloc(1, sizeof(unsigned int));

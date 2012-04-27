@@ -17,7 +17,6 @@ typedef struct entry_t {
 	unsigned int * ref;
 	char pingtimeout;
 	int type;
-	entry_t * server;
 } entry_t;
 
 
