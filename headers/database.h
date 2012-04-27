@@ -15,7 +15,7 @@ typedef struct entry_t {
 	unsigned long ip;
 	unsigned short port;
 	unsigned int * ref;
-	char pingtimeout;
+	char * pingtimeout;
 	int type;
 } entry_t;
 
@@ -43,6 +43,7 @@ public:
 
 	int lookupServer(unsigned long, unsigned short, entry_t **);
 	int lookupDclient(unsigned long, unsigned short, entry_t *);
+	int lookupIclient(unsigned long, unsigned short, entry_t *);
 
 	void delete_(string);
 	void freeEntry(entry_t);

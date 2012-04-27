@@ -179,6 +179,18 @@ void Server::incomingMessage(Message  message) {
 			}
 			connection->send(message, entry.ip, entry.port);
 			break;
+		case 150:
+			//printf("150 - pong (Received)");
+			//Decide wether the client is a server or client
+			if (database->lookupServer(entry.ip, entry.port, &pentry)) {
+				*pentry->pingtimeout=PINGTIMEOUT;
+				break;
+			}
+			if (database->lookupDclient(entry.ip, entry.port, &entry)) {
+				*entry.pingtimeout=PINGTIMEOUT;
+				break;
+			}
+			break;
 		case 160:
 			printf("160 - client -> server (Received)\n");
 			//Do we know this client?

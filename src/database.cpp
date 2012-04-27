@@ -17,7 +17,6 @@ entry_t Database::createEntry(string name, long ip, short port, int type) {
 	entry_t entry, * entry1;
 	entry.name = 0;
 	entry.ref = 0;
-	entry.pingtimeout=PINGTIMEOUT;
 	if (type == ICLIENT) {
 		if (!lookupServer(ip, port, &entry1)) {
 			return entry;
@@ -25,6 +24,8 @@ entry_t Database::createEntry(string name, long ip, short port, int type) {
 	}
 	entry.name = new string(name);
 	entry.ref = (unsigned int *)calloc(1, sizeof(unsigned int));
+	entry.pingtimeout = (char *)malloc(sizeof(char));
+	*entry.pingtimeout = PINGTIMEOUT;
 	entry.ip = ip;
 	entry.port = port;
 	entry.type = type;
@@ -106,10 +107,23 @@ int Database::lookupServer(unsigned long ip, unsigned short port, entry_t ** ent
 
 int Database::lookupDclient(unsigned long ip, unsigned short port, entry_t * entry)
 {
-	for (int i = 0 ; i < list[SERVER].nrentries ; i++) {
-		if (list[SERVER].entries[i].ip == ip && list[SERVER].entries[i].port == port) {
+	for (int i = 0 ; i < list[DCLIENT].nrentries ; i++) {
+		if (list[DCLIENT].entries[i].ip == ip && list[DCLIENT].entries[i].port == port) {
 			if (entry != NULL)
-				*entry = list[SERVER].entries[i];
+				*entry = list[DCLIENT].entries[i];
+			return 1;	
+		}
+	}
+	return 0;
+
+}
+
+int Database::lookupIclient(unsigned long ip, unsigned short port, entry_t * entry)
+{
+	for (int i = 0 ; i < list[ICLIENT].nrentries ; i++) {
+		if (list[ICLIENT].entries[i].ip == ip && list[ICLIENT].entries[i].port == port) {
+			if (entry != NULL)
+				*entry = list[ICLIENT].entries[i];
 			return 1;	
 		}
 	}
