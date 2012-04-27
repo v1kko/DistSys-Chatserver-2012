@@ -71,7 +71,7 @@ void Connection::send(Message message)
 {
 	int sendtype, size;
 	string recipient = message.getRecipients(&sendtype);
-	entry_t entry, * entries;
+	entry_t entry, * entries, * pentry;
 	
 	switch(sendtype) {
 		case NONE:
@@ -79,9 +79,11 @@ void Connection::send(Message message)
 		case ONE:
 			if (database->lookup(recipient, &entry) != 0) {
 				if (entry.type==ICLIENT) {
-					entry = *entry.server;
+					if(database->lookupServer(entry.ip, entry.port, &pentry))
+						message.setReferenceNumber((*pentry->ref)++);
+				} else {
+					message.setReferenceNumber((*pentry->ref)++);
 				}
-				message.setReferenceNumber((*entry.ref)++);
 				this->send(message, entry.ip, entry.port);
 			}
 			break;
