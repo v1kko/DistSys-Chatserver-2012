@@ -78,36 +78,31 @@ void Connection::send(Message message)
 			break;
 		case ONE:
 			if (database->lookup(recipient, &entry) != 0) {
+				if (entry.type==ICLIENT) {
+					entry = *entry.server;
+				}
 				message.setReferenceNumber((*entry.ref)++);
 				this->send(message, entry.ip, entry.port);
 			}
 			break;
 		case ALL:
-			entries  = database->allEntries(&size);
-			for (int i = 0 ; i < size ; i++) {
-				message.setReferenceNumber((*entries[i].ref)++);
-				if (entries[i].directlyconnected)
-					this->send(message, entries[i].ip, entries[i].port);
-			}
-			break;
-		case ALLBUTONECLIENT:
-			entries  = database->allEntries(&size);
-			for (int i = 0 ; i < size ; i++) {
-				if (entries[i].name->compare(recipient) != 0) {
+			for (int j = 0; j < 2 ; j ++ ) {
+				entries  = database->allEntries(j, &size);
+				for (int i = 0 ; i < size ; i++) {
 					message.setReferenceNumber((*entries[i].ref)++);
-					if (entries[i].directlyconnected)
-						this->send(message, entries[i].ip, entries[i].port);
+					this->send(message, entries[i].ip, entries[i].port);
 				}
 			}
 			break;
-		case ALLBUTONESERVER:
+		case ALLBUTONE:
 			if (database->lookup(recipient, &entry) != 0) {
-				entries  = database->allEntries(&size);
-				for (int i = 0 ; i < size ; i++) {
-					if (!(entries[i].ip == entry.ip && entries[i].port == entry.port)) {
-						message.setReferenceNumber((*entries[i].ref)++);
-						if (entries[i].directlyconnected)
+				for (int j = 0; j < 2 ; j ++ ) {
+					entries  = database->allEntries(j, &size);
+					for (int i = 0 ; i < size ; i++) {
+						if (!(entries[i].ip == entry.ip && entries[i].port == entry.port)) {
+							message.setReferenceNumber((*entries[i].ref)++);
 							this->send(message, entries[i].ip, entries[i].port);
+						}
 					}
 				}
 			}

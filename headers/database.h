@@ -2,54 +2,52 @@
 #define _DATABASE 1
 
 #include <string>
-
-#define INDIRECT_CLIENT 1
-#define DIRECT_CLIENT 2
-#define SERVER 3
-
 using namespace std;
 
-typedef struct{
-  string* name;
-  client_i *next,*prev;
-  char authorisatie;
-  unsigned short port;
-  unsigned long ip;
-  int ref;
-  char pingtimeout;
-}client_d;
+#define SERVER 0
+#define DCLIENT 1
+#define ICLIENT 2
 
-typedef struct{
-  string* name;
-  client_i *next,*prev;
-  server *to;
-}client_i;
+#define PINGTIMEOUT 2
 
-//miss is het handig om hier later ook nog een lijst met clients aan toe te voegen.
+typedef struct entry_t {
+	string * name;
+	unsigned long ip;
+	unsigned short port;
+	unsigned int * ref;
+	char pingtimeout;
+	int type;
+	entry_t * server;
+} entry_t;
 
-typedef struct{
-  server_i *next,*prev;
-  string * name;
-  unsigned long ip;
-  unsigned short port;
-  unsigned int ref;
-  char pingtimeout;
-}server;
+
+typedef struct entry_list_t {
+	int nrentries;
+	int size;
+	entry_t * entries;
+} entry_list_t;
 
 class Database {
 private:
-	int nrentries, size;
-	entry_t * entries;
+	entry_list_t * list;
 public:
-	int conClients;	
 	Database();
-	void* create_new_entry(int type)
-	int insert(void* entry, int type);
-	int replace(void* entry, int type);
-	int return_list(void* entry, int type);
-	int look_up_name(strin* koekje);
-	int look_up_ip(unsigned long ip);
-	void delete_(void* entry, int type);
+	
+	entry_t createEntry(string, long, short, int);
+
+	void insert(entry_t);
+	void insertReplace(entry_t);
+	void insertReplaceWithIp(entry_t);
+		
+	//returns 1 if found, 0 otherwise
+	int lookup(string, entry_t *);
+
+	int lookupServer(unsigned long, unsigned short, entry_t **);
+	int lookupDclient(unsigned long, unsigned short, entry_t *);
+
+	void delete_(string);
+	void freeEntry(entry_t);
+	entry_t * allEntries(int, int *);
 	
 };
 #endif

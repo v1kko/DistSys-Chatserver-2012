@@ -6,8 +6,7 @@ using namespace std;
 #define ALL 2
 #define ONE 1
 #define NONE 0
-#define ALLBUTONECLIENT -1
-#define ALLBUTONESERVER -2
+#define ALLBUTONE -2
 
 class Message
 {
@@ -42,8 +41,7 @@ public:
                 2 = send to all
 		1 = send to that person
                 0 = send to none (default)
-		-1 = send to everyone but person
-		-2 = send to everyone but server
+		-2 = send to everyone but server or dclient`
 	*/
 	void setRecipients(string, int);
 	string getRecipients(int *);
