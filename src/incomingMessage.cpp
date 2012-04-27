@@ -3,7 +3,7 @@ void Server::incomingMessage(Message  message) {
 	int type, temp, temp1, size, ref;
 	string buffer, name;
 	char cbuffer[100];
-	entry_t entry, * entries;
+	entry_t entry, * entries, *pentry;
 
 	type = message.getType();
 	buffer = message.getMessage();
@@ -42,7 +42,8 @@ void Server::incomingMessage(Message  message) {
 			//Send to Clients
 			entries = database->allEntries(DCLIENT,&size);
 			for (int i = 0 ; i < size ; i++) {
-					sprintf(cbuffer, "%6d%6d%s", i+1, size, (*entries[i].name).c_str());
+					sprintf(cbuffer, "%6d%6d%s", i+1, size, 
+						(*entries[i].name).c_str());
 					buffer = cbuffer;
 					message.setMessage(buffer);
 					message.setRecipients(*entry.name, ONE);
@@ -51,7 +52,8 @@ void Server::incomingMessage(Message  message) {
 			//Send to servers
 			entries = database->allEntries(SERVER,&size);
 			for (int i = 0 ; i < size ; i++) {
-					sprintf(cbuffer, "%6d%6d%s", i+1, size, (*entries[i].name).c_str());
+					sprintf(cbuffer, "%6d%6d%s", i+1, size, 
+						(*entries[i].name).c_str());
 					buffer = cbuffer;
 					message.setMessage(buffer);
 					message.setRecipients(*entry.name, ONE);
@@ -60,27 +62,42 @@ void Server::incomingMessage(Message  message) {
 			break;			
 		case 110:
 			printf("110 - server -> server (Received)\n");
-			if (buffer.length() > 12) {
-				name = buffer.substr(12);
-				message.getSender(&entry.ip, &entry.port);
-				entry.directlyconnected = 0;
-				entry.isClient = 1;
-				database->insertReplace(entry);
-			}
-			if ( parentip == entry.ip && parentport == entry.port ) {
-				printf("110 - server -> server (Sending to clients and non-parent servers)\n");
-				message.setRecipients(parentname, ALLBUTONESERVER);
-				connection->send(message);
-				
+			if(!database->lookupServer(entry.ip, entry.port, &pentry))
+				break;
+			if (!(buffer.length() > 12))
+				break; 
+			name = buffer.substr(12);
+			entry = database->createEntry(name, entry.ip, entry.port, ICLIENT);
+			if (entry.name == 0)
+				break;
+			//Insert received entry
+			database->insertReplace(entry);
+	
+			//Send to other servers	
+			printf("110 - server -> server (Sending to clients and servers)\n");
+			message.setRecipients(*pentry->name , ALLBUTONE);
+			connection->send(message);
+		
+			//If it is the initial list from the parent server, we must reply
+			if (parentip==entry.ip && parentport==entry.port && parentfirst) {
+
+				//Reply after last 110 message
 				if (!buffer.substr(0, 6).compare(buffer.substr(6, 6))) {
 					printf("110 - server -> parent server (Sending)\n");
-					entries = database->allEntries(&size);
-					temp = 0, temp1 = 0;
 					
+					//Check the number of entries we are going to send
+					entries = database->allEntries(ICLIENT, &size);
+					temp = 0, temp1 = 0;
 					for (int i = 0 ; i < size ; i++) {
-						if (!(entries[i].ip == parentip && entries[i].port == parentport))
+						if (!(entries[i].ip == parentip && 
+								entries[i].port == parentport))
 							temp ++;
 					}
+					entries = database->allEntries(DCLIENT, &size);
+					temp += size;
+
+					//If we have no client the parent doesn't know of,
+					//send empty reply
 					if (temp == 0) {
 						sprintf(cbuffer, "%6d%6d", 0, 0);
 						buffer = cbuffer;
@@ -88,16 +105,29 @@ void Server::incomingMessage(Message  message) {
 						message.setRecipients(parentname, ONE);
 						connection->send(message);
 					}
+
+					//Create & send the client list
+					entries = database->allEntries(ICLIENT, &size);
 					for (int i = 0 ; i < size ; i++) {
-						if (!(entries[i].ip == parentip && entries[i].port == parentport)) {
-							if (entries[i].isClient) {
-								sprintf(cbuffer, "%6d%6d%s", ++temp1, temp, (*entries[i].name).c_str());
-								buffer = cbuffer;
-								message.setMessage(buffer);
-								message.setRecipients(parentname, ONE);
-								connection->send(message);
-							}
+						if (!(entries[i].ip == parentip && 
+								entries[i].port == parentport)) {
+							
+							sprintf(cbuffer, "%6d%6d%s", ++temp1, temp, 
+								(*entries[i].name).c_str());
+							buffer = cbuffer;
+							message.setMessage(buffer);
+							message.setRecipients(parentname, ONE);
+							connection->send(message);
 						}
+					}
+					entries = database->allEntries(DCLIENT, &size);
+					for (int i = 0 ; i < size ; i++) {
+						sprintf(cbuffer, "%6d%6d%s", ++temp1, temp, 
+							(*entries[i].name).c_str());
+						buffer = cbuffer;
+						message.setMessage(buffer);
+						message.setRecipients(parentname, ONE);
+						connection->send(message);
 					}
 				}
 			}
@@ -229,6 +259,7 @@ void Server::incomingMessage(Message  message) {
 			parentip = entry.ip;
 			entry.port = htons(atoi( buffer.substr( temp+1, buffer.find_first_of(':',temp+1) - temp -1 ).c_str() ));
 			parentport = entry.port;
+			parentfirst = 1;
 			temp = buffer.find_first_of(':',temp+1);
 			entry.name = new string (buffer.substr(temp+1, string::npos));
 			parentname = *entry.name;
