@@ -167,6 +167,7 @@ void Server::incomingMessage(Message  message) {
 			//Check if it is the Control server
 			if ( entry.ip == csip && entry.port == htons(2001)) {
 				message.setReferenceNumber(csref++);
+				cstimeout = CSTIMEOUT;
 				connection->send(message, entry.ip, entry.port);
 				break;
 			}
@@ -335,6 +336,7 @@ void Server::incomingMessage(Message  message) {
 
 			if (buffer.compare("none") == 0) {
 				printf("602 - No parent received (Now root of network)\n");
+				parentname="none";
 				break;
 			}
 			
@@ -345,12 +347,13 @@ void Server::incomingMessage(Message  message) {
 			parentip = entry.ip = sa.sin_addr.s_addr;
 			parentport = entry.port = htons(atoi( buffer.substr( temp+1, 
 					buffer.find_first_of(':',temp+1) - temp -1 ).c_str() ));
+
 			parentfirst = 1;
 			temp = buffer.find_first_of(':',temp+1);
 			name = buffer.substr(temp+1, string::npos);
 			parentname = name;
 			entry = database->createEntry(name, entry.ip, entry.port, SERVER);
-			database->insert(entry);
+			database->insertReplaceWithIp(entry);
 							
 			printf("600 - Server -> Server: Trying to register (Sending)");
 			message.setType(600);
@@ -362,6 +365,7 @@ void Server::incomingMessage(Message  message) {
 			printf("604 - Control server -> server (Received)\n");
 			if (entry.ip != csip || entry.port != csport)
 				break;
+				
 			break;
 		default:
 			break;		

@@ -6,6 +6,8 @@
 #include <connection.h>
 #include <database.h>
 
+#define CSTIMEOUT 11
+
 using namespace std;
 
 class Server {
@@ -14,7 +16,7 @@ private:
 	Manager * manager;
 	Database * database;
 	string ident, parentname;
-	unsigned long csip, parentfirst, parentip, parentport, csref;
+	unsigned long noparenttimeout, cstimeout, csip, parentfirst, parentip, parentport, csref;
 	unsigned short csport;
 
 	void incomingMessage(Message);

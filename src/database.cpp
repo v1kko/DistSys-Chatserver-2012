@@ -49,8 +49,7 @@ void Database::insertReplace(entry_t entry)
 {
 	int type = entry.type;
 	entry_list_t * db = &list[type];
-	entry_t entry1;
-	if (this->lookup(*entry.name, &entry1)) {
+	if (this->lookup(*entry.name, NULL)) {
 		this->delete_(*entry.name);
 	}
 	
@@ -64,6 +63,9 @@ void Database::insertReplaceWithIp(entry_t entry)
 	int type = entry.type;
 	entry_list_t * db = &list[type];
 	entry_t * entry1, entry2;
+	if (this->lookup(*entry.name, NULL)) {
+		this->delete_(*entry.name);
+	}
 	if (type == SERVER) {
 		if (this->lookupServer(entry.ip, entry.port, &entry1)) {
 			this->delete_(*entry1->name);

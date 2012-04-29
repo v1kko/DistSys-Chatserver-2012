@@ -17,7 +17,10 @@ Server::Server(unsigned short _port, string _csip, unsigned short _csport, strin
 	csip = sa.sin_addr.s_addr;
 	csport = htons(_csport);
 	csref = 0;
+	cstimeout = CSTIMEOUT;
 	ident = _ident;
+	parentname = "Undefined";
+	parentip = parentport = 0;
 	connection = new Connection (_port);
 	database = new Database();
 	manager = new Manager();
@@ -89,6 +92,24 @@ void Server::monitor(void) {
 	entry_t * entries, entry, entry1;
 	Message message;
 	int size;
+	//Check Control server and parent server
+	if (parentname == "Undefined" || parentfirst) {
+		noparenttimeout--;
+	} else {
+		noparenttimeout=CSTIMEOUT;
+	}
+	cstimeout--;
+	if (cstimeout <= 0 || noparenttimeout <= 0) {
+		csref = 0;
+		cstimeout=CSTIMEOUT;
+		noparenttimeout = CSTIMEOUT;
+		parentname = "Undefined";
+		message.setType(601);
+		message.setReferenceNumber(csref++);
+		message.setMessage(ident);
+		connection->send(message, csip, csport);
+		printf("601 - Server -> Control server: Request for parent Server\n");
+	}
 
 	//Check servers
 	entries = database->allEntries(SERVER, &size);
