@@ -1,6 +1,7 @@
 #include <server.h>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 
 extern "C" {
 #include <arpa/inet.h>
@@ -17,7 +18,7 @@ Server::Server(unsigned short _port, string _csip, unsigned short _csport, strin
 	csip = sa.sin_addr.s_addr;
 	csport = htons(_csport);
 	csref = 0;
-	cstimeout = CSTIMEOUT;
+	cstimeout = noparenttimeout = CSTIMEOUT;
 	ident = _ident;
 	parentname = "Undefined";
 	parentip = parentport = 0;
@@ -122,6 +123,7 @@ void Server::monitor(void) {
 		if(*entries[i].pingtimeout <=0) {
 			entry = entries[i];
 			//send 603 because a server is down
+			printf("603 - Server -> Control server: Server is down\n");
 			message.setType(603);
 			message.setReferenceNumber(csref++);
 			message.setMessage(*entry.name);

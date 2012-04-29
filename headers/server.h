@@ -6,7 +6,7 @@
 #include <connection.h>
 #include <database.h>
 
-#define CSTIMEOUT 11
+#define CSTIMEOUT 15
 
 using namespace std;
 

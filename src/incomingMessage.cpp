@@ -2,8 +2,8 @@ void Server::incomingMessage(Message  message) {
 
 	int type, temp, temp1, size, ref;
 	string buffer, name;
-	char cbuffer[100];
-	entry_t entry, * entries, *pentry;
+	char cbuffer[200], * t;
+	entry_t entry, entry1, * entries, *pentry;
 
 	type = message.getType();
 	buffer = message.getMessage();
@@ -52,7 +52,7 @@ void Server::incomingMessage(Message  message) {
 					message.setRecipients(*entry.name, ONE);
 					connection->send(message);
 			}			
-			entries = database->allEntries(SERVER,&size);
+			entries = database->allEntries(ICLIENT,&size);
 			for (int i = 0 ; i < size ; i++) {
 					sprintf(cbuffer, "%6d%6d%s", i+1, size, 
 						(*entries[i].name).c_str());
@@ -66,20 +66,19 @@ void Server::incomingMessage(Message  message) {
 			printf("110 - server -> server (Received)\n");
 			if(!database->lookupServer(entry.ip, entry.port, &pentry))
 				break;
-			if (!(buffer.length() > 12))
-				break; 
-			name = buffer.substr(12);
-			entry = database->createEntry(name, entry.ip, entry.port, ICLIENT);
-			if (entry.name == 0)
-				break;
-			//Insert received entry
-			database->insertReplace(entry);
-	
-			//Send to other servers	
-			printf("110 - server -> server (Sending to clients and servers)\n");
-			message.setRecipients(*pentry->name , ALLBUTONE);
-			connection->send(message);
-		
+			if (buffer.length() > 12) {
+				name = buffer.substr(12);
+				entry = database->createEntry(name, entry.ip, entry.port, ICLIENT);
+				if (entry.name == 0)
+					break;
+				//Insert received entry
+				database->insertReplace(entry);
+				
+				//Send to other servers	
+				printf("110 - server -> server (Sending to clients and servers)\n");
+				message.setRecipients(*pentry->name , ALLBUTONE);
+				connection->send(message);
+			}
 			//If it is the initial list from the parent server, we must reply
 			if (parentip==entry.ip && parentport==entry.port && parentfirst) {
 
@@ -161,7 +160,7 @@ void Server::incomingMessage(Message  message) {
 			}
 			break;
 		case 140:
-			printf("140 - ping -> 150 - pong\n");// Clutters the logs
+			//printf("140 - ping -> 150 - pong\n");// Clutters the logs
 			message.setType(150);
 			message.setReferenceNumber(0);
 			//Check if it is the Control server
@@ -283,6 +282,29 @@ void Server::incomingMessage(Message  message) {
 			message.setRecipients(*entry.name, ONE);
 			connection->send(message);
 			break;				
+		case 300:
+			//Send to correct recipient
+			printf("300 - server -> server (Received)\n");
+			if (!database->lookupServer(entry.ip, entry.port, &pentry))
+				break;
+			temp = buffer.find_first_of(' ')+1;
+			name = buffer.substr(temp, buffer.find_first_of(' ', temp)-temp);
+
+			//Check for all
+			if (name == "#all") {
+				printf("300 -  server -> ALL (Sending)\n");
+				message.setRecipients(*pentry->name, ALLBUTONE);
+				connection->send(message);
+				break;
+			}
+
+
+			if (database->lookup(name, NULL)) {
+				message.setRecipients(name, ONE);
+				connection->send(message);
+				printf("300 - server -> client/server (Sent)\n");
+			}
+			break;
 		case 600:
 			printf("600 - server -> server (Received)\n");
 			
@@ -301,6 +323,7 @@ void Server::incomingMessage(Message  message) {
 
 			//If we have no client the parent doesn't know of,
 			//send empty reply
+			message.setType(110);
 			if (temp == 0) {
 				sprintf(cbuffer, "%6d%6d", 0, 0);
 				buffer = cbuffer;
@@ -308,7 +331,6 @@ void Server::incomingMessage(Message  message) {
 				message.setRecipients(name, ONE);
 				connection->send(message);
 			}
-
 			//Create & send the client list
 			entries = database->allEntries(ICLIENT, &size);
 			for (int i = 0 ; i < size ; i++) {
@@ -337,25 +359,24 @@ void Server::incomingMessage(Message  message) {
 			if (buffer.compare("none") == 0) {
 				printf("602 - No parent received (Now root of network)\n");
 				parentname="none";
+				parentfirst = 0;
 				break;
 			}
-			
+			sprintf(cbuffer, "%s", buffer.c_str());
+			t = strtok(cbuffer, ":");
 			//Insert future parent into database
 			struct sockaddr_in sa;
-			inet_pton(AF_INET,buffer.substr(0, (temp = 
-					buffer.find_first_of(':'))).c_str(), &sa.sin_addr);
+			inet_pton(AF_INET, t, &sa.sin_addr);
 			parentip = entry.ip = sa.sin_addr.s_addr;
-			parentport = entry.port = htons(atoi( buffer.substr( temp+1, 
-					buffer.find_first_of(':',temp+1) - temp -1 ).c_str() ));
-
-			parentfirst = 1;
-			temp = buffer.find_first_of(':',temp+1);
-			name = buffer.substr(temp+1, string::npos);
-			parentname = name;
+			if ((t = strtok(NULL, ":")) == NULL) break;
+			parentport = entry.port = htons(atoi(t));
+			if ((t = strtok(NULL, ":")) == NULL) break;
+			parentname = name = t;
 			entry = database->createEntry(name, entry.ip, entry.port, SERVER);
 			database->insertReplaceWithIp(entry);
+			parentfirst = 1;
 							
-			printf("600 - Server -> Server: Trying to register (Sending)");
+			printf("600 - Server -> Server: Trying to register (Sending)\n");
 			message.setType(600);
 			message.setMessage(ident);
 			message.setRecipients(name, ONE);
@@ -365,7 +386,54 @@ void Server::incomingMessage(Message  message) {
 			printf("604 - Control server -> server (Received)\n");
 			if (entry.ip != csip || entry.port != csport)
 				break;
-				
+			sprintf(cbuffer, "%s", buffer.c_str());
+			if (!(t = strtok(cbuffer, " "))) break;
+			//Do we know this server?
+			if (database->lookup(t, &entry)) {
+				database->delete_(*entry.name);
+				//Remove children of dead server
+				while(database->lookupIclient(entry.ip, entry.port, &entry1)) {
+					message.setType(130);
+					message.setRecipients(*entry1.name, ALL);
+					message.setMessage(*entry1.name + " Received 604");
+					database->delete_(*entry1.name);
+					connection->send(message);
+				}
+			}
+			//Is this our parent? (if not we dont have to connect to the new parent)
+			if ((strcmp(t, parentname.c_str())))
+				break;
+
+			//connect to the new parent	
+			parentname = "Undefined";
+			if (!(t = strtok(NULL, ": "))) break;
+			if (!strcmp(t, "none")) {	
+				printf("604 - No parent received (Now root of network)\n");
+				parentname="none";
+				parentfirst = 0;
+				break;
+			}
+			if (!strcmp(t, "self")) {	
+				printf("604 - self received (Some bogus server 604'd us)\n");
+				parentname="Undefined";
+				csref = 0;		
+				message.setType(601);
+				message.setReferenceNumber(csref++);
+				message.setMessage(ident);
+				connection->send(message, csip, csport);
+				printf("601 - Server -> Control server: Request for parent Server\n");
+				break;
+			}
+
+			inet_pton(AF_INET, t, &sa.sin_addr);
+			parentip = entry.ip = sa.sin_addr.s_addr;
+			if ((t = strtok(NULL, ": ")) == NULL) break;
+			parentport = entry.port = htons(atoi(t));
+			if ((t = strtok(NULL, ": ")) == NULL) break;
+			parentname = name = t;
+			entry = database->createEntry(name, entry.ip, entry.port, SERVER);
+			database->insertReplaceWithIp(entry);
+			parentfirst = 1;
 			break;
 		default:
 			break;		
