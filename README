@@ -3,8 +3,6 @@ Distributed Systems 2012
 
 Authors:
 	Victor Azizi
-	Tim Bloeme
-	Simone van Gompel
 
 About:
 	A chatserver application written in C++, Specifically designed for use with the protocol defined in doc/Distributed_Systems_Chat2011-2012v1
