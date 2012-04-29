@@ -21,7 +21,7 @@ public:
 		(except the type number and referencenumber)
 		Blocking function
 	*/	
-	Message listen(void);
+	Message listen(int *);
 
 	//send to receivers
 	void send(Message);

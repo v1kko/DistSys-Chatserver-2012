@@ -38,6 +38,7 @@ void Server::addManager(string data)
 	//Returns when the server should exit
 void Server::start(void)
 {
+	int succes;
 	struct timeval tv;
 	time_t tstart, tend;
 	fd_set rsd;
@@ -80,8 +81,9 @@ void Server::start(void)
 				tv.tv_usec = 0;
 				FD_ZERO(&rsd);
 				FD_SET(connection->sd, &rsd);	
-				message = connection->listen();
-				this->incomingMessage(message);
+				message = connection->listen(&succes);
+				if (succes)
+					this->incomingMessage(message);
 				break;
 		}
 	}

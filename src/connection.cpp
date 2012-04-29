@@ -33,37 +33,36 @@ void Connection::setDatabase(Database * db)
 	database = db;
 }
 
-Message Connection::listen(void){
+Message Connection::listen(int * succes){
 	Message message;
+	*succes = 1;
 	struct sockaddr_in sender;
 	socklen_t fromlen = sizeof(struct sockaddr_in);
 
-	while (1) {
-		uint16_t rlength = recvfrom(sd, buffer, sizeof(char)*200, 0, (struct sockaddr *)&sender, &fromlen);
-		if (rlength < 6)
-			continue;
-		
-		uint16_t length = ntohs(*(uint16_t *)buffer);
-		uint16_t type = ntohs(*(uint16_t *)&buffer[2]);
-		uint16_t refnum = ntohs(*(uint16_t *)&buffer[4]);
+	uint16_t rlength = recvfrom(sd, buffer, sizeof(char)*200, 0, (struct sockaddr *)&sender, &fromlen);
+	if (rlength < 6)
+		*succes=0;
+	
+	uint16_t length = ntohs(*(uint16_t *)buffer);
+	uint16_t type = ntohs(*(uint16_t *)&buffer[2]);
+	uint16_t refnum = ntohs(*(uint16_t *)&buffer[4]);
 
-		if (rlength != length)
-			continue;
+	if (rlength != length)
+		*succes=0;
+	
+	buffer[length] = '\0';
+	string t = &buffer[6];
+	if (t.length() + 6 != length)
+		*succes=0;
+	if (string::npos != 
+	t.find_first_not_of("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ`~!@#$%^&*()-_=+[{]};:'\"\\|,<.>/? "))
+		*succes=0;
 		
-		buffer[length] = '\0';
-		string t = &buffer[6];
-		if (t.length() + 6 != length)
-			continue;
-		if (string::npos != 
-		t.find_first_not_of("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ`~!@#$%^&*()-_=+[{]};:'\"\\|,<.>/? "))
-			continue;
-			
-		message.setType(type);
-		message.setReferenceNumber(refnum);
-		message.setMessage(t);
-		message.setSender(sender.sin_addr.s_addr, sender.sin_port);
-		break;
-	}
+	message.setType(type);
+	message.setReferenceNumber(refnum);
+	message.setMessage(t);
+	message.setSender(sender.sin_addr.s_addr, sender.sin_port);
+	
 	return message;
 }
 
