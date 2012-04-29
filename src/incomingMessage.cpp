@@ -251,13 +251,14 @@ void Server::incomingMessage(Message  message) {
 			printf("170 - server -> All (Sent)\n");
 			break;
 		case 200:
+		case 210:
 			printf("200 - client -> server (Received)\n");
 			//Do we know this client?
 			if (! database->lookupDclient(entry.ip, entry.port, &entry)) {
 				break;	
 			}
 			
-			message.setType(300);
+			type == 200 ? message.setType(300): message.setType(310);
 			buffer.insert(0, " ").insert(0, *entry.name);
 			message.setMessage(buffer);
 			temp = buffer.find_first_of(' ')+1;
@@ -283,6 +284,7 @@ void Server::incomingMessage(Message  message) {
 			connection->send(message);
 			break;				
 		case 300:
+		case 310:
 			//Send to correct recipient
 			printf("300 - server -> server (Received)\n");
 			if (!database->lookupServer(entry.ip, entry.port, &pentry))
@@ -290,6 +292,7 @@ void Server::incomingMessage(Message  message) {
 			temp = buffer.find_first_of(' ')+1;
 			name = buffer.substr(temp, buffer.find_first_of(' ', temp)-temp);
 
+			type == 300 ? message.setType(300): message.setType(310);
 			//Check for all
 			if (name == "#all") {
 				printf("300 -  server -> ALL (Sending)\n");
