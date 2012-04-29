@@ -14,15 +14,15 @@ private:
 	Manager * manager;
 	Database * database;
 	string ident, parentname;
-	unsigned long csip, csport, parentfirst, parentip, parentport, csref;
-	unsigned short port;
+	unsigned long csip, parentfirst, parentip, parentport, csref;
+	unsigned short csport;
 
 	void incomingMessage(Message);
 	void monitor(void);
 	
 public:
 	//port, csip, ident
-	Server(unsigned short, unsigned long, string);
+	Server(unsigned short, string, unsigned short, string);
 	// Must be format (username password);
 	void addManager(string);
 

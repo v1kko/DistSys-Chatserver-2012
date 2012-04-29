@@ -10,14 +10,15 @@ extern "C" {
 using namespace std;
 
 #include <incomingMessage.cpp>
-Server::Server(unsigned short _port, unsigned long _csip, string _ident)
+Server::Server(unsigned short _port, string _csip, unsigned short _csport, string _ident)
 {
-	port = _port;
-	csip = _csip;
-	csport = htons(2001);
+	struct sockaddr_in sa;
+	inet_pton(AF_INET, _csip.c_str(), &sa.sin_addr);
+	csip = sa.sin_addr.s_addr;
+	csport = htons(_csport);
 	csref = 0;
 	ident = _ident;
-	connection = new Connection (port);
+	connection = new Connection (_port);
 	database = new Database();
 	manager = new Manager();
 	connection->setDatabase(database);
