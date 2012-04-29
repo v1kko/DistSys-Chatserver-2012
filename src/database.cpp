@@ -13,7 +13,7 @@ Database::Database()
 	}
 }
 	
-entry_t Database::createEntry(string name, long ip, short port, int type) {
+entry_t Database::createEntry(string name, unsigned long ip, unsigned short port, int type) {
 	entry_t entry, * entry1;
 	entry.name = 0;
 	entry.ref = 0;

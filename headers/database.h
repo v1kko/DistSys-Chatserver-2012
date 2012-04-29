@@ -32,7 +32,7 @@ private:
 public:
 	Database();
 	
-	entry_t createEntry(string, long, short, int);
+	entry_t createEntry(string, unsigned long, unsigned short, int);
 
 	void insert(entry_t);
 	void insertReplace(entry_t);

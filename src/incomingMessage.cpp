@@ -161,7 +161,7 @@ void Server::incomingMessage(Message  message) {
 			}
 			break;
 		case 140:
-			//printf("140 - ping -> 150 - pong\n"); Clutters the logs
+			printf("140 - ping -> 150 - pong\n");// Clutters the logs
 			message.setType(150);
 			message.setReferenceNumber(0);
 			//Check if it is the Control server
@@ -198,7 +198,7 @@ void Server::incomingMessage(Message  message) {
 			}
 			break;
 		case 160:
-			printf("160 - client -> server (Received)\n");
+			//printf("160 - client -> server (Received)\n");
 			//Do we know this client?
 			if (!database->lookupDclient(entry.ip, entry.port, &entry))
 				break;
@@ -339,28 +339,29 @@ void Server::incomingMessage(Message  message) {
 			}
 			
 			//Insert future parent into database
+			struct sockaddr_in sa;
 			inet_pton(AF_INET,buffer.substr(0, (temp = 
-					buffer.find_first_of(':'))).c_str(), &entry.ip);
-			parentip = entry.ip;
-			entry.port = htons(atoi( buffer.substr( temp+1, 
+					buffer.find_first_of(':'))).c_str(), &sa.sin_addr);
+			parentip = entry.ip = sa.sin_addr.s_addr;
+			parentport = entry.port = htons(atoi( buffer.substr( temp+1, 
 					buffer.find_first_of(':',temp+1) - temp -1 ).c_str() ));
-			parentport = entry.port;
 			parentfirst = 1;
 			temp = buffer.find_first_of(':',temp+1);
 			name = buffer.substr(temp+1, string::npos);
 			parentname = name;
-			entry = database->createEntry(name, entry.port, entry.ip, SERVER);
+			entry = database->createEntry(name, entry.ip, entry.port, SERVER);
 			database->insert(entry);
 							
 			printf("600 - Server -> Server: Trying to register (Sending)");
-			fflush(stdout);
 			message.setType(600);
 			message.setMessage(ident);
 			message.setRecipients(name, ONE);
 			connection->send(message);
 			break;
 		case 604:
-			//TODO
+			printf("604 - Control server -> server (Received)\n");
+			if (entry.ip != csip || entry.port != csport)
+				break;
 			break;
 		default:
 			break;		

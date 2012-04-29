@@ -107,12 +107,13 @@ void Server::monitor(void) {
 			database->delete_(*entry.name);
 			connection->send(message, csip, csport);
 			//Remove children of dead server
-			while(database->lookupIclient(entry.ip, entry.port, &entry1))
+			while(database->lookupIclient(entry.ip, entry.port, &entry1)) {
 				message.setType(130);
 				message.setRecipients(*entry1.name, ALL);
 				message.setMessage(*entry1.name + " Ping Timeout");
 				database->delete_(*entry1.name);
 				connection->send(message);
+			}
 		}
 	}
 
