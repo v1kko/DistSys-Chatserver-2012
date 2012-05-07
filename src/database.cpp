@@ -4,13 +4,14 @@
 
 using namespace std;
 
-Database::Database()
+Database::Database(unsigned int _maxclients)
 {
 	list = (entry_list_t *)calloc(3, sizeof(entry_list_t));
 	for (int i = 0 ; i < 3 ; i++) {
 		list[i].size = 10;
 		list[i].entries =  (entry_t *)malloc(sizeof(entry_t) * 10);
 	}
+	maxclients = _maxclients;
 }
 	
 entry_t Database::createEntry(string name, unsigned long ip, unsigned short port, int type) {
@@ -31,34 +32,40 @@ entry_t Database::createEntry(string name, unsigned long ip, unsigned short port
 	entry.type = type;
 	return entry;	
 }
-void Database::insert(entry_t entry)
+int Database::insert(entry_t entry)
 {
 	int type = entry.type;
 	entry_list_t * db = &list[type];
-	if (this->lookup(*entry.name, NULL)) {
+	if (this->lookup(*entry.name, NULL) || (unsigned int)nrclients <= maxclients) {
 		this->freeEntry(entry);
-		return;
+		return 0;
 	}
 	
 	if (db->size == db->nrentries)
 		db->entries = (entry_t *)realloc(db->entries, sizeof(entry_t) * (db->size *= 2));
 	db->entries[db->nrentries++] = entry;
+	return 1;
 }
 
-void Database::insertReplace(entry_t entry)
+int Database::insertReplace(entry_t entry)
 {
 	int type = entry.type;
 	entry_list_t * db = &list[type];
 	if (this->lookup(*entry.name, NULL)) {
 		this->delete_(*entry.name);
 	}
+	if ((unsigned int)nrclients <= maxclients) {
+		this->freeEntry(entry);
+		return 0;
+	}
 	
 	if (db->size == db->nrentries)
 		db->entries = (entry_t *)realloc(db->entries, sizeof(entry_t) * (db->size *= 2));
 	db->entries[db->nrentries++] = entry;
+	return 1;
 }
 
-void Database::insertReplaceWithIp(entry_t entry)
+int Database::insertReplaceWithIp(entry_t entry)
 {
 	int type = entry.type;
 	entry_list_t * db = &list[type];
@@ -76,9 +83,14 @@ void Database::insertReplaceWithIp(entry_t entry)
 			this->delete_(*entry2.name);
 		}
 	}
+	if ((unsigned int)nrclients <= maxclients) {
+		this->freeEntry(entry);
+		return 0;
+	}
 	if (db->size == db->nrentries)
 		db->entries = (entry_t *)realloc(db->entries, sizeof(entry_t) * (db->size *= 2));
 	db->entries[db->nrentries++] = entry;
+	return 1;
 }
 
 int Database::lookup(string name, entry_t * entry)

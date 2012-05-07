@@ -33,11 +33,13 @@ void cfhelp() {
 	printf("\tserverport\n");
 	printf("\tcontrolserverport\n");
 	printf("\tcontrolserverip\n");
+	printf("\tmaxclients\n");
 	printf("-default:\n");
 	printf("\tteamname           victor\n");
 	printf("\tserverport         2003\n");
 	printf("\tcontrolserverport  2001\n");
 	printf("\tcontrolserverip    146.50.4.35 (deze)\n");
+	printf("\tmaxclients         100\n");
 }
 
 
@@ -49,7 +51,7 @@ int main(int argc, char * argv[])
 		return 1;
 	}
 	char buffer[200];
-	int pid = getpid();
+	int pid = getpid(), maxclients = 100;
 	unsigned short csport=2001;
 	unsigned short port=2003;
 	string csip = "146.50.4.35"; 
@@ -100,7 +102,14 @@ int main(int argc, char * argv[])
 					return 1;
 				}
 			}
-				
+			if (!strcmp(t, "maxclients")) {
+				t = strtok(NULL, "= \n");
+				maxclients = atoi(t);
+				if (maxclients <= 0) {
+					printf("Error, maxclients not valid");
+					return 1;
+				}
+			}
 		}
 	}
 	string ident;
@@ -115,7 +124,7 @@ int main(int argc, char * argv[])
 		ident = buffer;
 	}
 	fclose(rfd);
-	Server server (port, csip, csport, ident);
+	Server server (port, csip, csport, ident, maxclients);
     server.start();
     return 0;     
 }

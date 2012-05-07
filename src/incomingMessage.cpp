@@ -14,19 +14,18 @@ void Server::incomingMessage(Message  message) {
 			//Check if name is available
 			printf("100 - client -> server (Received)\n");
 			name = buffer.substr(0, buffer.find_first_of(" "));
-			if (database->lookup(name, NULL)) {
+			entry = database->createEntry(name, entry.ip, entry.port, DCLIENT);
+			if (!database->insert(entry)) {
 				printf("510 - server -> client (Sent) - Registratie mislukt\n");
 				message.setType(510);
 				message.setReferenceNumber(0);
-				message.setMessage("Name already exists");
+				message.setMessage("Name already exists or the database is full");
 				connection->send(message, entry.ip, entry.port);
 				break;
 			}
 
 			//Register in network
 			printf("500 - server -> client (Sent) - Registratie gelukt\n");
-			entry = database->createEntry(name, entry.ip, entry.port, DCLIENT);
-			database->insertReplaceWithIp(entry);
 			message.setType(500);
 			message.setMessage("");
 			message.setRecipients(*entry.name, ONE);
@@ -42,7 +41,7 @@ void Server::incomingMessage(Message  message) {
 			
 			printf("110 - server -> client (Sending) - user list\n");
 
-			//Send clientlsit to new client
+			//Send clientlist to new client
 			entries = database->allEntries(DCLIENT,&size);
 			for (int i = 0 ; i < size ; i++) {
 					sprintf(cbuffer, "%6d%6d%s", i+1, size, 
@@ -72,7 +71,8 @@ void Server::incomingMessage(Message  message) {
 				if (entry.name == 0)
 					break;
 				//Insert received entry
-				database->insertReplace(entry);
+				if (!database->insertReplace(entry))
+					break;
 				
 				//Send to other servers	
 				printf("110 - server -> server (Sending to clients and servers)\n");
@@ -314,7 +314,10 @@ void Server::incomingMessage(Message  message) {
 			//Insert Server child into database
 			entry = database->createEntry(name= buffer, 
 					entry.ip, entry.port, SERVER);
-			database->insertReplaceWithIp(entry);
+
+			//break if we dont have enough space (maybe send action message?)
+			if (!database->insertReplaceWithIp(entry))
+				break;
 			
 			printf("110 - server -> server (Sending to new child)\n");
 			//Check the number of entries we are going to send
@@ -376,8 +379,9 @@ void Server::incomingMessage(Message  message) {
 			if ((t = strtok(NULL, ":")) == NULL) break;
 			parentname = name = t;
 			entry = database->createEntry(name, entry.ip, entry.port, SERVER);
-			database->insertReplaceWithIp(entry);
 			parentfirst = 1;
+			if (!database->insertReplaceWithIp(entry))
+				break;
 							
 			printf("600 - Server -> Server: Trying to register (Sending)\n");
 			message.setType(600);
@@ -434,9 +438,16 @@ void Server::incomingMessage(Message  message) {
 			parentport = entry.port = htons(atoi(t));
 			if ((t = strtok(NULL, ": ")) == NULL) break;
 			parentname = name = t;
-			entry = database->createEntry(name, entry.ip, entry.port, SERVER);
-			database->insertReplaceWithIp(entry);
 			parentfirst = 1;
+			entry = database->createEntry(name, entry.ip, entry.port, SERVER);
+			if (!database->insertReplaceWithIp(entry))
+				break;
+							
+			printf("600 - Server -> Server: Trying to register (Sending)\n");
+			message.setType(600);
+			message.setMessage(ident);
+			message.setRecipients(name, ONE);
+			connection->send(message);
 			break;
 		default:
 			break;		

@@ -29,14 +29,17 @@ typedef struct entry_list_t {
 class Database {
 private:
 	entry_list_t * list;
+	unsigned int maxclients;
+#define nrclients list[0].nrentries + list[1].nrentries + list[2].nrentries 
+
 public:
-	Database();
+	Database(unsigned int);
 	
 	entry_t createEntry(string, unsigned long, unsigned short, int);
 
-	void insert(entry_t);
-	void insertReplace(entry_t);
-	void insertReplaceWithIp(entry_t);
+	int insert(entry_t);
+	int insertReplace(entry_t);
+	int insertReplaceWithIp(entry_t);
 		
 	//returns 1 if found, 0 otherwise
 	int lookup(string, entry_t *);

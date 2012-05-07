@@ -11,7 +11,7 @@ extern "C" {
 using namespace std;
 
 #include <incomingMessage.cpp>
-Server::Server(unsigned short _port, string _csip, unsigned short _csport, string _ident)
+Server::Server(unsigned short _port, string _csip, unsigned short _csport, string _ident, unsigned int _maxclients)
 {
 	struct sockaddr_in sa;
 	inet_pton(AF_INET, _csip.c_str(), &sa.sin_addr);
@@ -23,7 +23,7 @@ Server::Server(unsigned short _port, string _csip, unsigned short _csport, strin
 	parentname = "Undefined";
 	parentip = parentport = 0;
 	connection = new Connection (_port);
-	database = new Database();
+	database = new Database(_maxclients);
 	manager = new Manager();
 	connection->setDatabase(database);
 }
