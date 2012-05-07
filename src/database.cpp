@@ -36,7 +36,7 @@ int Database::insert(entry_t entry)
 {
 	int type = entry.type;
 	entry_list_t * db = &list[type];
-	if (this->lookup(*entry.name, NULL) || (unsigned int)nrclients <= maxclients) {
+	if (this->lookup(*entry.name, NULL) || (unsigned int)nrclients >= maxclients) {
 		this->freeEntry(entry);
 		return 0;
 	}
@@ -54,7 +54,7 @@ int Database::insertReplace(entry_t entry)
 	if (this->lookup(*entry.name, NULL)) {
 		this->delete_(*entry.name);
 	}
-	if ((unsigned int)nrclients <= maxclients) {
+	if ((unsigned int)nrclients >= maxclients) {
 		this->freeEntry(entry);
 		return 0;
 	}
@@ -83,7 +83,7 @@ int Database::insertReplaceWithIp(entry_t entry)
 			this->delete_(*entry2.name);
 		}
 	}
-	if ((unsigned int)nrclients <= maxclients) {
+	if ((unsigned int)nrclients >= maxclients) {
 		this->freeEntry(entry);
 		return 0;
 	}
