@@ -6,7 +6,8 @@
 #include <connection.h>
 #include <database.h>
 
-#define CSTIMEOUT 15
+#define CSTIMEOUT 3
+#define SELECT 10
 
 using namespace std;
 

@@ -34,12 +34,14 @@ void cfhelp() {
 	printf("\tcontrolserverport\n");
 	printf("\tcontrolserverip\n");
 	printf("\tmaxclients\n");
+	printf("\tlogfile\n");
 	printf("-default:\n");
 	printf("\tteamname           victor\n");
 	printf("\tserverport         2003\n");
 	printf("\tcontrolserverport  2001\n");
 	printf("\tcontrolserverip    146.50.4.35 (deze)\n");
 	printf("\tmaxclients         100\n");
+	printf("\tlogfile            log.server\n");
 }
 
 
@@ -53,9 +55,10 @@ int main(int argc, char * argv[])
 	char buffer[200];
 	int pid = getpid(), maxclients = 100;
 	unsigned short csport=2001;
-	unsigned short port=2003;
+	unsigned short port=1337;
 	string csip = "146.50.4.35"; 
 	string teamname = "victor";
+	string logfile = "log.server";
 
 	if (!strcmp(argv[1], "-default")) {
 	} else
@@ -85,6 +88,10 @@ int main(int argc, char * argv[])
 					printf("Error, serverport not valid");
 					return 1;
 				}
+			}
+			if (!strcmp(t, "logfile")) {
+				t = strtok(NULL, "= \n");
+				logfile = t;
 			}
 			if (!strcmp(t, "controlserverport")) {
 				t = strtok(NULL, "= \n");
@@ -122,6 +129,11 @@ int main(int argc, char * argv[])
 		rand = rand % 10;
 		sprintf(buffer, "%s%d", ident.c_str(), rand);
 		ident = buffer;
+	}
+
+	if (!(freopen(logfile.c_str(), "a+", stdout))) {
+		printf("Error opening file for writing");
+		return 1;
 	}
 	fclose(rfd);
 	Server server (port, csip, csport, ident, maxclients);

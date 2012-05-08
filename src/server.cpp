@@ -53,7 +53,7 @@ void Server::start(void)
 	
 	connection->send(message, csip, csport);
 	printf("601 - Server -> Control server: Request for parent Server\n");
-	tv.tv_sec = 2;
+	tv.tv_sec = SELECT;
 	tv.tv_usec = 0;
 	FD_ZERO(&rsd);
 	FD_SET(connection->sd, &rsd);	
@@ -66,18 +66,18 @@ void Server::start(void)
 			case 0:
 				this->monitor();	
 				time(&tstart);
-				tv.tv_sec = 2;
+				tv.tv_sec = SELECT;
 				tv.tv_usec = 0;
 				FD_ZERO(&rsd);
 				FD_SET(connection->sd, &rsd);	
 				break;
 			default:
 				time(&tend);
-				if (tend - tstart > 2) {
+				if (tend - tstart > SELECT) {
 					this->monitor();
 					time(&tstart);
 				}
-				tv.tv_sec = 2;
+				tv.tv_sec = SELECT;
 				tv.tv_usec = 0;
 				FD_ZERO(&rsd);
 				FD_SET(connection->sd, &rsd);	
@@ -86,6 +86,7 @@ void Server::start(void)
 					this->incomingMessage(message);
 				break;
 		}
+		fflush(NULL);
 	}
 }
 	
