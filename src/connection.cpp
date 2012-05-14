@@ -15,7 +15,7 @@ extern "C"
 
 using namespace std;
 
-Connection::Connection(unsigned short port = 2001)
+Connection::Connection(Manager * _manager, unsigned short port = 2001)
 {
 	buffer = (char *)malloc(sizeof(char)*201);
 	int yes = 1;
@@ -26,6 +26,7 @@ Connection::Connection(unsigned short port = 2001)
 	sa.sin_port = htons(port);
 	inet_pton(AF_INET, "0.0.0.0", &sa.sin_addr);
 	bind(sd, (struct sockaddr *)&sa, sizeof(struct sockaddr_in));
+	manager = _manager;
 }
 	
 void Connection::setDatabase(Database * db)
@@ -132,4 +133,18 @@ void Connection::send(Message message, unsigned long ip, unsigned short port)
 	buffer[5] = htons(refnum) >> 8;
 	strcpy(&buffer[6], message.getMessage().c_str());
 	sendto(sd, buffer, length, 0, (struct sockaddr *)&destination, sizeof(struct sockaddr_in));
+	
+	unsigned long _ip;
+	unsigned short _port;
+	char cbuffer[200];
+	manager->getAdress(&_ip, &_port);
+	if (manager->isOnline() && !(port == _port && ip == _ip)) {
+		if (type != 140 && type != 150) {
+			sprintf(cbuffer, "%s %s (out) %d %s", manager->getName().c_str(), manager->getName().c_str(), type, message.getMessage().c_str());
+			message.setType(310);
+			message.setMessage(cbuffer);
+			message.setReferenceNumber(manager->getRef());
+			this->send(message, _ip, _port);
+		}
+	}
 }

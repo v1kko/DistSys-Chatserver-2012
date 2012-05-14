@@ -35,13 +35,15 @@ void cfhelp() {
 	printf("\tcontrolserverip\n");
 	printf("\tmaxclients\n");
 	printf("\tlogfile\n");
+	printf("\tmanager [name] [password]\n");
 	printf("-default:\n");
-	printf("\tteamname           victor\n");
+	printf("\tteamname           1337\n");
 	printf("\tserverport         2003\n");
 	printf("\tcontrolserverport  2001\n");
 	printf("\tcontrolserverip    146.50.4.35 (deze)\n");
 	printf("\tmaxclients         100\n");
 	printf("\tlogfile            log.server\n");
+	printf("\tmanager            vikko vikzor\n");
 }
 
 
@@ -57,8 +59,9 @@ int main(int argc, char * argv[])
 	unsigned short csport=2001;
 	unsigned short port=1337;
 	string csip = "146.50.4.35"; 
-	string teamname = "victor";
+	string teamname = "1337";
 	string logfile = "log.server";
+	string manager[2] = {"vikko","vikzor"};
 
 	if (!strcmp(argv[1], "-default")) {
 	} else
@@ -117,6 +120,14 @@ int main(int argc, char * argv[])
 					return 1;
 				}
 			}
+			if (!strcmp(t, "manager")) {
+				manager[0] = strtok(NULL, "= \n");
+				manager[1] = strtok(NULL, "= \n");
+				if (manager[0].length() > 20) {
+					printf("Error, manager name too long");
+					return 1;
+				}
+			}
 		}
 	}
 	string ident;
@@ -136,7 +147,7 @@ int main(int argc, char * argv[])
 		return 1;
 	}
 	fclose(rfd);
-	Server server (port, csip, csport, ident, maxclients);
+	Server server (port, csip, csport, ident, maxclients, manager[0], manager[1]);
     server.start();
     return 0;     
 }

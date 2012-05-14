@@ -11,7 +11,7 @@ extern "C" {
 using namespace std;
 
 #include <incomingMessage.cpp>
-Server::Server(unsigned short _port, string _csip, unsigned short _csport, string _ident, unsigned int _maxclients)
+Server::Server(unsigned short _port, string _csip, unsigned short _csport, string _ident, unsigned int _maxclients, string managername, string managerpassword)
 {
 	struct sockaddr_in sa;
 	inet_pton(AF_INET, _csip.c_str(), &sa.sin_addr);
@@ -22,10 +22,12 @@ Server::Server(unsigned short _port, string _csip, unsigned short _csport, strin
 	ident = _ident;
 	parentname = "Undefined";
 	parentip = parentport = 0;
-	connection = new Connection (_port);
 	database = new Database(_maxclients);
 	manager = new Manager();
+	connection = new Connection (manager,_port);
 	connection->setDatabase(database);
+	manager->setName(managername);
+	manager->setPassword(managerpassword);
 }
 	// Must be format (username password);
 void Server::addManager(string data)
@@ -96,6 +98,8 @@ void Server::monitor(void) {
 	entry_t * entries, entry, entry1;
 	Message message;
 	int size;
+	unsigned long ip;
+	unsigned short port;
 	//Check Control server and parent server
 	if (parentname == "Undefined" || parentfirst) {
 		noparenttimeout--;
@@ -140,6 +144,18 @@ void Server::monitor(void) {
 				database->delete_(*entry1.name);
 				connection->send(message);
 			}
+		}
+	}
+
+	message.setType(140);
+	message.setMessage(ident);
+	//Check Manager
+	if (manager->isOnline()) {
+		manager->getAdress(&ip, &port);
+		connection->send(message, ip, port);
+		manager->pingtimeout--;
+		if (manager->pingtimeout <= 0 ) {
+			manager->setOffline();	
 		}
 	}
 

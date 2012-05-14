@@ -17,6 +17,12 @@ string Manager::getName(void)
 	return name;
 }
 
+int Manager::isManager(string _name, string _password)
+{
+	if (name == _name && password == _password)
+		return 1;
+	return 0;
+}
 string Manager::getPassword(void)
 {
 	return password;
@@ -27,6 +33,14 @@ int Manager::isOnline(void)
 	return online;
 }
 
+void Manager::setRef(void)
+{
+	reference = 0;
+}
+int Manager::getRef(void)
+{
+	return reference++;
+}
 //Sets isOnline to true
 void Manager::setAdress(unsigned long _ip, unsigned short _port)
 {

@@ -3,16 +3,17 @@
 
 #include <message.h>
 #include <database.h>
+#include <manager.h>
 class Connection
 {
 private:
 	char * buffer;
 	Database * database;
-
+	Manager * manager;
 public:
 	int sd;
-	Connection(); //Constructor, Port must be set to 2001!
-	Connection(unsigned short); //Constructor, set port to arg1
+	Connection(Manager *); //Constructor, Port must be set to 2001!
+	Connection(Manager *, unsigned short); //Constructor, set port to arg1
 	
 	void setDatabase(Database *);
 	

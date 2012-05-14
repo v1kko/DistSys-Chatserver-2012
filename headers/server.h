@@ -25,7 +25,8 @@ private:
 	
 public:
 	//port, csip, ident
-	Server(unsigned short, string, unsigned short, string, unsigned int);
+	Server(unsigned short, string, unsigned short, string, unsigned int,
+			string , string);
 	// Must be format (username password);
 	void addManager(string);
 

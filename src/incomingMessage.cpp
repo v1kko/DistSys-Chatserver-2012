@@ -1,7 +1,9 @@
 void Server::incomingMessage(Message  message) {
 
 	int type, temp, temp1, size, ref;
-	string buffer, name;
+	unsigned long ip;
+	unsigned short port;
+	string buffer, name, password;
 	char cbuffer[200], * t;
 	entry_t entry, entry1, * entries, *pentry;
 
@@ -9,13 +11,57 @@ void Server::incomingMessage(Message  message) {
 	buffer = message.getMessage();
 	ref = message.getReferenceNumber();
 	message.getSender(&entry.ip, &entry.port);
+
+	Message managermessage;
+
+	if(manager->isOnline()) {
+		sprintf(cbuffer, "%s %s (in) %d %s",manager->getName().c_str(),manager->getName().c_str(), type, buffer.c_str());
+		managermessage.setMessage(cbuffer);
+		managermessage.setType(310);
+		managermessage.setReferenceNumber(manager->getRef());
+		managermessage.setType(310);
+		manager->getAdress(&ip, &port);
+		if (!(ip == entry.ip && port == entry.port) && type != 150 && type != 140)
+			connection->send(managermessage, ip, port);
+	}
+
 	switch (type) {
 		case 100:
 			//Check if name is available
 			printf("100 - client -> server (Received)\n");
-			name = buffer.substr(0, buffer.find_first_of(" "));
+			strcpy(cbuffer, buffer.c_str());
+			t = strtok(cbuffer, " ");
+			name = (t != NULL) ? t : "";
+			t = strtok(NULL, " ");
+			password = (t != NULL) ? t : "";
+				
+			if (manager->getName() == name) { 
+				if (!manager->isManager(name, password)) {
+					printf("510 - server -> client (Sent) - Registratie mislukt\n");
+					message.setType(510);
+					message.setReferenceNumber(0);
+					message.setMessage("Incorrect password");
+					connection->send(message, entry.ip, entry.port);
+					break;
+				} else {
+					printf("500 - server -> client (Sent) - Registratie gelukt\n");
+					manager->setAdress(entry.ip, entry.port);
+					manager->pingtimeout = PINGTIMEOUT;
+					manager->setRef();
+					message.setType(500);
+					message.setMessage("");
+					message.setReferenceNumber(manager->getRef());
+					connection->send(message, entry.ip, entry.port);
+					message.setType(310);
+					sprintf(cbuffer, "%s %s Welcome Administrator welcome*-", manager->getName().c_str(),manager->getName().c_str());
+					message.setMessage(cbuffer);
+					connection->send(message, entry.ip, entry.port);
+					break;
+				}
+			}	
+
 			entry = database->createEntry(name, entry.ip, entry.port, DCLIENT);
-			if (!database->insert(entry)) {
+			if(!database->insert(entry)) {
 				printf("510 - server -> client (Sent) - Registratie mislukt\n");
 				message.setType(510);
 				message.setReferenceNumber(0);
@@ -187,6 +233,10 @@ void Server::incomingMessage(Message  message) {
 		case 150:
 			//printf("150 - pong (Received)");
 			//Decide wether the client is a server or client
+			manager->getAdress(&ip, &port);
+			if (entry.ip == ip && entry.port == port) {
+				manager->pingtimeout = PINGTIMEOUT;
+			}
 			if (database->lookupServer(entry.ip, entry.port, &pentry)) {
 				*pentry->pingtimeout=PINGTIMEOUT;
 				break;
@@ -449,6 +499,20 @@ void Server::incomingMessage(Message  message) {
 			message.setRecipients(name, ONE);
 			connection->send(message);
 			break;
+		case 700:
+			if (!manager->isOnline())
+				break;
+			manager->getAdress(&ip, &port);
+			if (ip != entry.ip || port != entry.port)
+				break;
+			message.setType(701);
+			message.setMessage("Beheerder stopt de server");
+			message.setRecipients("all", ALL);
+			connection->send(message);
+			connection->send(message, ip, port);
+			printf("700 - Mod -> Server, Shutting down gracefully");
+			fflush(NULL);
+			exit(0);
 		default:
 			break;		
 	}
