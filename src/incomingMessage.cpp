@@ -364,6 +364,8 @@ void Server::incomingMessage(Message  message) {
 				} else {
 					//Say it with an appropriate name
 					sprintf(cbuffer, "%s%s%c%d", "mod@", "0.0.0.0", ':', sport);
+					printf("%s\n", cbuffer);
+					fflush(NULL);
 					*entry.name = cbuffer;
 					ifaddrs ** iflist = NULL, * ifa = NULL;
 					getifaddrs(iflist);
