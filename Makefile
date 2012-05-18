@@ -6,7 +6,7 @@ OL=objects
 DOC=doc
 
 WARNING_FLAGS=-Wall -Wextra -Wshadow -pedantic-errors
-LDFLAGS= -ggdb -I$(HD) -Isrc
+LDFLAGS= -ggdb -I$(HD) -Isrc -O2
 CFLAGS= $(LDFLAGS) $(WARNING_FLAGS)
 
 VPATH = src:$(DOC)

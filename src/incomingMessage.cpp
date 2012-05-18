@@ -56,6 +56,9 @@ void Server::incomingMessage(Message  message) {
 					sprintf(cbuffer, "%s %s Welcome Administrator welcome*-", manager->getName().c_str(),manager->getName().c_str());
 					message.setMessage(cbuffer);
 					connection->send(message, entry.ip, entry.port);
+					sprintf(cbuffer, "%s %s type \"list\" to see all connected clients", manager->getName().c_str(),manager->getName().c_str());
+					message.setMessage(cbuffer);
+					connection->send(message, entry.ip, entry.port);
 					break;
 				}
 			}	
@@ -195,14 +198,38 @@ void Server::incomingMessage(Message  message) {
 		case 130:
 			//Delete the client from our database and send to others
 			printf("130 - server -> server (Received)\n");
-			if (!database->lookupServer(entry.ip, entry.port, &pentry))
+			manager->getAdress( &ip, &port);
+			if (!database->lookupServer(entry.ip, entry.port, &pentry)&&(!manager->isOnline() || !entry.ip == ip || !entry.port == port))
 				break;
-			*entry.name = buffer.substr(0, buffer.find_first_of(' ')); 
-			if (database->lookupIclient(entry.ip, entry.port, &entry)) {
-				message.setRecipients(*pentry->name, ALLBUTONE);
+
+			if (manager->isOnline() && entry.ip == ip && entry.port == port) {
+				*entry.name = buffer.substr(0, buffer.find_first_of(' ')); 
+				if (database->lookupDclient(entry.ip, entry.port, &entry)) {
+					message.setRecipients("#all", ALL);
+					connection->send(message);
+					printf("130 - Manager -> All (Sent)\n");
+					database->delete_(buffer.substr(0, buffer.find_first_of(' ')));
+					message.setType(310);
+					message.setReferenceNumber(manager->getRef());
+					sprintf(cbuffer, "%s %s %s", manager->getName().c_str(),manager->getName().c_str(), "Client succesfully kicked");
+					message.setMessage(cbuffer);
+					connection->send(message, ip, port);
+				} else {
+					message.setType(310);
+					message.setReferenceNumber(manager->getRef());
+					sprintf(cbuffer, "%s %s %s", manager->getName().c_str(),manager->getName().c_str(), "Client is not a direct client, not kicked");
+					message.setMessage(cbuffer);
+					connection->send(message, ip, port);
+				}
 				connection->send(message);
-				printf("130 - server -> All (Sent)\n");
-				database->delete_(buffer.substr(0, buffer.find_first_of(' ')));
+			} else {
+				*entry.name = buffer.substr(0, buffer.find_first_of(' ')); 
+				if (database->lookupIclient(entry.ip, entry.port, &entry)) {
+					message.setRecipients(*pentry->name, ALLBUTONE);
+					connection->send(message);
+					printf("130 - server -> All (Sent)\n");
+					database->delete_(buffer.substr(0, buffer.find_first_of(' ')));
+				}
 			}
 			break;
 		case 140:
@@ -308,23 +335,51 @@ void Server::incomingMessage(Message  message) {
 			if (! database->lookupDclient(entry.ip, entry.port, &entry) && (!manager->isOnline() || !entry.ip == ip || !entry.port == port)) {
 				break;	
 			}
-			if ((!manager->isOnline() || !entry.ip == ip || !entry.port == port)) {	
-				sprintf(cbuffer, "%s%s%c%d", "mod@", "0.0.0.0", ':', sport);
-				*entry.name = cbuffer;
-				ifaddrs ** iflist = NULL, * ifa = NULL;
-				getifaddrs(iflist);
-				for (ifa = *iflist ; ifa != NULL ; ifa = ifa->ifa_next) {
-					if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_INET)
-						continue;
-					t = (char *)inet_ntop(ifa->ifa_addr->sa_family, &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr, cbuffer, 200);
-					if ( t == NULL )
-						continue;
-					if (!strcmp(t, "0.0.0.0") || !strcmp(t, "127.0.0.1"))
-						continue;
-					sprintf(cbuffer, "%s%s%c%d", "mod@", t, ':', sport);
+			
+			//Special Treatment for Managers
+			if ((manager->isOnline() && entry.ip == ip && entry.port == port)) {	
+				if (buffer == "list") {
+					//Send client list
+					message.setType(310);
+					message.setReferenceNumber(manager->getRef());
+					sprintf(cbuffer, "%s %s List of Directly Connected Clients", manager->getName().c_str(),manager->getName().c_str());
+					message.setMessage(cbuffer);
+					connection->send(message, ip, port);
+					entries = database->allEntries(DCLIENT, &size); 
+					for (int i = 0 ; i < size ; i++) {
+						message.setReferenceNumber(manager->getRef());
+						sprintf(cbuffer, "%s %s %s", manager->getName().c_str(),manager->getName().c_str(), (*entries[i].name).c_str());
+						message.setMessage(cbuffer);
+						connection->send(message, ip, port);
+					}
+					message.setReferenceNumber(manager->getRef());
+					message.setMessage("List of Indirectly Directly Connected Clients:");
+					entries = database->allEntries(ICLIENT, &size); 
+					for (int i = 0 ; i < size ; i++) {
+						sprintf(cbuffer, "%s %s %s", manager->getName().c_str(),manager->getName().c_str(), (*entries[i].name).c_str());
+						message.setMessage(cbuffer);
+						connection->send(message, ip, port);
+					}
+					break;
+				} else {
+					//Say it with an appropriate name
+					sprintf(cbuffer, "%s%s%c%d", "mod@", "0.0.0.0", ':', sport);
 					*entry.name = cbuffer;
+					ifaddrs ** iflist = NULL, * ifa = NULL;
+					getifaddrs(iflist);
+					for (ifa = *iflist ; ifa != NULL ; ifa = ifa->ifa_next) {
+						if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_INET)
+							continue;
+						t = (char *)inet_ntop(ifa->ifa_addr->sa_family, &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr, cbuffer, 200);
+						if ( t == NULL )
+							continue;
+						if (!strcmp(t, "0.0.0.0") || !strcmp(t, "127.0.0.1"))
+							continue;
+						sprintf(cbuffer, "%s%s%c%d", "mod@", t, ':', sport);
+						*entry.name = cbuffer;
+					}
+					freeifaddrs(*iflist);
 				}
-				freeifaddrs(*iflist);
 			}
 
 			type == 200 ? message.setType(300): message.setType(310);

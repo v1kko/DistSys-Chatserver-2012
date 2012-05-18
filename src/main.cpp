@@ -74,8 +74,11 @@ int main(int argc, char * argv[])
 			printf("Config file does not exist\n");
 			return 1;
 		}
+A:
 		while(fgets(buffer, 200, fd)) {
 			char * t = strtok(buffer, "= \n");
+			if (t == NULL)
+				goto A;
 			if (!strcmp(t, "teamname")) {
 				t = strtok(NULL, "= \n");
 				teamname = t;
