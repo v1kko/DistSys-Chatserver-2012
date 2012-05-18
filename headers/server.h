@@ -18,7 +18,7 @@ private:
 	Database * database;
 	string ident, parentname;
 	unsigned long noparenttimeout, cstimeout, csip, parentfirst, parentip, parentport, csref;
-	unsigned short csport;
+	unsigned short csport, sport;
 
 	void incomingMessage(Message);
 	void monitor(void);

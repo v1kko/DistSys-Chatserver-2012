@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <ifaddrs.h>
 
 extern "C" {
 #include <arpa/inet.h>
@@ -24,6 +25,7 @@ Server::Server(unsigned short _port, string _csip, unsigned short _csport, strin
 	parentip = parentport = 0;
 	database = new Database(_maxclients);
 	manager = new Manager();
+	sport = _port;
 	connection = new Connection (manager,_port);
 	connection->setDatabase(database);
 	manager->setName(managername);

@@ -197,8 +197,8 @@ void Server::incomingMessage(Message  message) {
 			printf("130 - server -> server (Received)\n");
 			if (!database->lookupServer(entry.ip, entry.port, &pentry))
 				break;
-			if (database->lookup(buffer.substr(0, buffer.find_first_of(' ')), 
-					NULL)) {
+			*entry.name = buffer.substr(0, buffer.find_first_of(' ')); 
+			if (database->lookupIclient(entry.ip, entry.port, &entry)) {
 				message.setRecipients(*pentry->name, ALLBUTONE);
 				connection->send(message);
 				printf("130 - server -> All (Sent)\n");
@@ -304,10 +304,29 @@ void Server::incomingMessage(Message  message) {
 		case 210:
 			printf("200 - client -> server (Received)\n");
 			//Do we know this client?
-			if (! database->lookupDclient(entry.ip, entry.port, &entry)) {
+			manager->getAdress( &ip, &port);
+			if (! database->lookupDclient(entry.ip, entry.port, &entry) && (!manager->isOnline() || !entry.ip == ip || !entry.port == port)) {
 				break;	
 			}
-			
+			if ((!manager->isOnline() || !entry.ip == ip || !entry.port == port)) {	
+				sprintf(cbuffer, "%s%s%c%d", "mod@", "0.0.0.0", ':', sport);
+				*entry.name = cbuffer;
+				ifaddrs ** iflist = NULL, * ifa = NULL;
+				getifaddrs(iflist);
+				for (ifa = *iflist ; ifa != NULL ; ifa = ifa->ifa_next) {
+					if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_INET)
+						continue;
+					t = (char *)inet_ntop(ifa->ifa_addr->sa_family, &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr, cbuffer, 200);
+					if ( t == NULL )
+						continue;
+					if (!strcmp(t, "0.0.0.0") || !strcmp(t, "127.0.0.1"))
+						continue;
+					sprintf(cbuffer, "%s%s%c%d", "mod@", t, ':', sport);
+					*entry.name = cbuffer;
+				}
+				freeifaddrs(*iflist);
+			}
+
 			type == 200 ? message.setType(300): message.setType(310);
 			buffer.insert(0, " ").insert(0, *entry.name);
 			message.setMessage(buffer);
@@ -328,10 +347,11 @@ void Server::incomingMessage(Message  message) {
 			message.setRecipients(buffer.substr(temp, 
 					buffer.find_first_of(' ', temp)-temp), ONE);
 			connection->send(message);
-
 			//Send to the sender
-			message.setRecipients(*entry.name, ONE);
-			connection->send(message);
+			if ((!manager->isOnline() || !entry.ip == ip || !entry.port == port)) {	
+				message.setRecipients(*entry.name, ONE);
+				connection->send(message);
+			}
 			break;				
 		case 300:
 		case 310:
