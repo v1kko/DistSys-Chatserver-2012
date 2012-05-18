@@ -4,9 +4,9 @@ void Server::incomingMessage(Message  message) {
 	unsigned long ip;
 	unsigned short port;
 	string buffer, name, password;
-	char cbuffer[200], * t;
+	char cbuffer[200], cbuffer1[100], * t;
 	entry_t entry, entry1, * entries, *pentry;
-
+	entry.name = &name;
 	type = message.getType();
 	buffer = message.getMessage();
 	ref = message.getReferenceNumber();
@@ -33,8 +33,7 @@ void Server::incomingMessage(Message  message) {
 			t = strtok(cbuffer, " ");
 			name = (t != NULL) ? t : "";
 			t = strtok(NULL, " ");
-			password = (t != NULL) ? t : "";
-				
+			password = (t != NULL) ? t : "";	
 			if (manager->getName() == name) { 
 				if (!manager->isManager(name, password)) {
 					printf("510 - server -> client (Sent) - Registratie mislukt\n");
@@ -277,10 +276,13 @@ void Server::incomingMessage(Message  message) {
 		case 160:
 			//printf("160 - client -> server (Received)\n");
 			//Do we know this client?
-			if (!database->lookupDclient(entry.ip, entry.port, &entry))
+			manager->getAdress( &ip, &port);
+			if (! database->lookupDclient(entry.ip, entry.port, &entry) && (!manager->isOnline() || !entry.ip == ip || !entry.port == port)) 
 				break;
 			//Is the name available?
-			if (database->lookup(buffer, NULL)) {
+			
+			
+			if (database->lookup(buffer, NULL) || (*entry.name == manager->getName() && (!entry.ip == ip || !entry.port == port) )) {
 				printf("530 - server -> client (Sent)\n");
 				message.setType(530);
 				message.setRecipients(*entry.name, ONE);
@@ -292,6 +294,46 @@ void Server::incomingMessage(Message  message) {
 			//Replace the entry
 			entry = database->createEntry(buffer, entry.ip, entry.port,DCLIENT);
 			database->insertReplaceWithIp(entry);
+
+			//special manager treatment
+			if (manager->isOnline() && entry.ip == ip && entry.port == port ) {
+				name = manager->getName();
+				message.setType(110);
+				message.setRecipients(buffer, ALLBUTONE);
+				sprintf(cbuffer, "%6d%6d%s", 1, 1, name.c_str());
+				message.setMessage(cbuffer);
+				connection->send(message);
+
+				//Check the number of entries we are going to send
+				entries = database->allEntries(ICLIENT, &size);
+				temp = size;
+				temp1 = 0;
+				entries = database->allEntries(DCLIENT, &size);
+				temp += size;
+
+				//Create & send the client list
+				entries = database->allEntries(ICLIENT, &size);
+				for (int i = 0 ; i < size ; i++) {
+					if (!(entries[i].ip == parentip && 
+							entries[i].port == parentport)) {
+						
+						sprintf(cbuffer, "%6d%6d%s", ++temp1, temp, 
+							(*entries[i].name).c_str());
+						message.setMessage(cbuffer);
+						message.setRecipients(buffer, ONE);
+						connection->send(message);
+					}
+				}
+				entries = database->allEntries(DCLIENT, &size);
+				for (int i = 0 ; i < size ; i++) {
+					sprintf(cbuffer, "%6d%6d%s", ++temp1, temp, 
+						(*entries[i].name).c_str());
+					message.setMessage(cbuffer);
+					message.setRecipients(buffer, ONE);
+					connection->send(message);
+				}
+				manager->setOffline();
+			}
 
 			//Send a confirmation
 			printf("520 - server -> client (Sent)\n");
@@ -338,7 +380,7 @@ void Server::incomingMessage(Message  message) {
 			
 			//Special Treatment for Managers
 			if ((manager->isOnline() && entry.ip == ip && entry.port == port)) {	
-				if (buffer == "list") {
+				if (buffer == "#all list") {
 					//Send client list
 					message.setType(310);
 					message.setReferenceNumber(manager->getRef());
@@ -353,9 +395,12 @@ void Server::incomingMessage(Message  message) {
 						connection->send(message, ip, port);
 					}
 					message.setReferenceNumber(manager->getRef());
-					message.setMessage("List of Indirectly Directly Connected Clients:");
+					sprintf(cbuffer, "%s %s List of Indirectly Connected Clients", manager->getName().c_str(),manager->getName().c_str());
+					message.setMessage(cbuffer);
+					connection->send(message, ip, port);
 					entries = database->allEntries(ICLIENT, &size); 
 					for (int i = 0 ; i < size ; i++) {
+						message.setReferenceNumber(manager->getRef());
 						sprintf(cbuffer, "%s %s %s", manager->getName().c_str(),manager->getName().c_str(), (*entries[i].name).c_str());
 						message.setMessage(cbuffer);
 						connection->send(message, ip, port);
@@ -364,23 +409,23 @@ void Server::incomingMessage(Message  message) {
 				} else {
 					//Say it with an appropriate name
 					sprintf(cbuffer, "%s%s%c%d", "mod@", "0.0.0.0", ':', sport);
-					printf("%s\n", cbuffer);
-					fflush(NULL);
-					*entry.name = cbuffer;
-					ifaddrs ** iflist = NULL, * ifa = NULL;
-					getifaddrs(iflist);
-					for (ifa = *iflist ; ifa != NULL ; ifa = ifa->ifa_next) {
+					name = cbuffer;
+					printf("%s\n", name.c_str());
+					struct ifaddrs * iflist = NULL, * ifa = NULL;
+					getifaddrs(&iflist);
+					for (ifa = iflist ; ifa != NULL ; ifa = ifa->ifa_next) {
 						if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_INET)
 							continue;
-						t = (char *)inet_ntop(ifa->ifa_addr->sa_family, &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr, cbuffer, 200);
+						t = (char *)inet_ntop(ifa->ifa_addr->sa_family, &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr, cbuffer1, 200);
 						if ( t == NULL )
 							continue;
 						if (!strcmp(t, "0.0.0.0") || !strcmp(t, "127.0.0.1"))
 							continue;
-						sprintf(cbuffer, "%s%s%c%d", "mod@", t, ':', sport);
-						*entry.name = cbuffer;
+						sprintf(cbuffer, "%s%s%c%d", "mod@", cbuffer1, ':', sport);
+						name = cbuffer;
 					}
-					freeifaddrs(*iflist);
+					entry.name = &name;
+					freeifaddrs(iflist);
 				}
 			}
 
