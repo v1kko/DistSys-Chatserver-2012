@@ -34,6 +34,8 @@ void Server::incomingMessage(Message  message) {
 			name = (t != NULL) ? t : "";
 			t = strtok(NULL, " ");
 			password = (t != NULL) ? t : "";	
+
+			//Check if this is a manager
 			if (manager->getName() == name) { 
 				if (!manager->isManager(name, password)) {
 					printf("510 - server -> client (Sent) - Registratie mislukt\n");
@@ -201,6 +203,7 @@ void Server::incomingMessage(Message  message) {
 			if (!database->lookupServer(entry.ip, entry.port, &pentry)&&(!manager->isOnline() || !entry.ip == ip || !entry.port == port))
 				break;
 
+			//Let the manager kick clients
 			if (manager->isOnline() && entry.ip == ip && entry.port == port) {
 				*entry.name = buffer.substr(0, buffer.find_first_of(' ')); 
 				if (database->lookupDclient(entry.ip, entry.port, &entry)) {
@@ -614,7 +617,7 @@ void Server::incomingMessage(Message  message) {
 			entry = database->createEntry(name, entry.ip, entry.port, SERVER);
 			if (!database->insertReplaceWithIp(entry))
 				break;
-							
+		
 			printf("600 - Server -> Server: Trying to register (Sending)\n");
 			message.setType(600);
 			message.setMessage(ident);
@@ -622,6 +625,7 @@ void Server::incomingMessage(Message  message) {
 			connection->send(message);
 			break;
 		case 700:
+			//only manager can stop the server
 			if (!manager->isOnline())
 				break;
 			manager->getAdress(&ip, &port);
