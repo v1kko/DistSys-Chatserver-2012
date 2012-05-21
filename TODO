@@ -1,9 +1,0 @@
-Message Types aanpassen
-	-connection hierop aanpassen
-
-
-connection aanpassen aan de database (nadat de message types zijn veranderd anders dubbel werk)
-
-server case switch aanpassen, dit kan pas na de nieuwe message types (en db)
-
-met select() een soort monitor maken
